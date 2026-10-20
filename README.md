@@ -1,9 +1,9 @@
-# Specflow
+# Flow
 
 > A spec-driven, multi-agent development pipeline for
 > [Claude Code](https://claude.com/claude-code), inspired by the flow state.
 
-Specflow takes a Jira ticket from card to verified, reviewed, tested
+Flow takes a Jira ticket from card to verified, reviewed, tested
 implementation in one command. It writes a spec from the card,
 implements it, reviews the code, scores every acceptance criterion
 against the diff, writes QA documents and Playwright specs, and keeps an
@@ -11,7 +11,7 @@ append-only decision log next to the spec — all as plain files you can
 read, diff and commit.
 
 ```
-/specflow:run PROJ-123
+/flow:run PROJ-123
 ```
 
 Built and maintained by [Christie Trent (@christie304)](https://github.com/christie304).
@@ -19,7 +19,7 @@ Built and maintained by [Christie Trent (@christie304)](https://github.com/chris
 ## Why spec-driven
 
 An AI agent that codes straight from a ticket drifts: it fills gaps with
-guesses and nobody can tell afterwards what it was aiming at. Specflow
+guesses and nobody can tell afterwards what it was aiming at. Flow
 makes the spec the contract. Every later step — implementation, review,
 verification, test planning — reads the same `spec.md`, and every
 verdict cites `path:line` evidence against it. When a run is done you
@@ -51,7 +51,7 @@ Pre-flight → Wave A → Wave B → Wave C → Wave E → Wave F → Wave D →
 - **Phase 5c** pushes the branch and opens a PR — only if you opt in.
 - **Phase 8** closes the run log and writes telemetry locally.
 
-The plugin's own [README](plugins/specflow/README.md) has the full
+The plugin's own [README](plugins/flow/README.md) has the full
 pipeline diagram, the sub-agent roster and every flag.
 
 ## Install
@@ -59,12 +59,12 @@ pipeline diagram, the sub-agent roster and every flag.
 In Claude Code:
 
 ```
-/plugin marketplace add christie304/specflow
-/plugin install specflow@specflow
+/plugin marketplace add christie304/flow
+/plugin install flow@flow
 ```
 
 Restart Claude Code, then pick up new versions later with
-`/plugin marketplace update specflow`.
+`/plugin marketplace update flow`.
 
 ### Requirements
 
@@ -73,7 +73,7 @@ Restart Claude Code, then pick up new versions later with
   script (standard library only).
 - **Git**, with `user.email` set — it names your telemetry files and
   signs each spec as author.
-- **Atlassian MCP** (optional) so Specflow can read Jira cards. Without
+- **Atlassian MCP** (optional) so Flow can read Jira cards. Without
   it, paste the card when prompted or pass `--card-file`.
 - **GitHub CLI** (optional) — `gh auth login` — for the opt-in push and
   PR step.
@@ -84,12 +84,12 @@ Restart Claude Code, then pick up new versions later with
 
 ```
 cd ~/code/my-app
-/specflow:run PROJ-123 --verify
+/flow:run PROJ-123 --verify
 ```
 
 The first run asks a few setup questions (base branch, default board
 key, branch naming format, whether to push code) and writes
-`.specflow/config.md`. It also creates `.specflow/PROJ-standards.md`
+`.flow/config.md`. It also creates `.flow/PROJ-standards.md`
 from a template — fill it with your codebase's conventions; the
 implementer and the reviewers enforce it. Commit both so your team
 shares one setup. `--verify` is a dry run: it prints the resolved
@@ -98,47 +98,48 @@ configuration and the plan without writing anything.
 Then run it for real:
 
 ```
-/specflow:run PROJ-123
+/flow:run PROJ-123
 ```
 
-Results land in `.spec/features/PROJ-123/p01/`: `spec.md`,
+Results land in `.flow/.spec/features/PROJ-123/p01/`: `spec.md`,
 `code-review.md`, `acceptance-criteria.md`, the three test documents and
-`specflow-log.md`. The code sits committed on a local feature branch
+`flow-log.md`. The code sits committed on a local feature branch
 until you push it.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `/specflow:run {ticket}` | The full pipeline. Each run is a new pass folder (`p01`, `p02`, …). |
-| `/specflow:brief {ticket}` | Ticket-readiness interview before you start. |
-| `/specflow:spec {ticket}` | Regenerate the latest pass's spec. |
-| `/specflow:code {ticket}` | Implement the spec, or fix named criteria with `--target-acs`. |
-| `/specflow:review [ticket]` | One code review against your standards file. |
-| `/specflow:verify {ticket}` | Score the acceptance criteria against the diff. |
-| `/specflow:test {ticket}` | Regenerate the QA documents. |
-| `/specflow:playwright {ticket} [TS-###]` | Author and run Playwright specs for the ticket. |
-| `/specflow:decisions {ticket}` | Append decisions from notes, threads or comments to the decision log — works before the card exists. |
-| `/specflow:fetch {ticket}` | Print the card as JSON. |
-| `/specflow:datapoints --tables a,b` | List every code path that writes to the named tables (`--endpoint path` for the reverse). |
-| `/specflow:log [ticket]` | Show a run log, or list them all. |
-| `/specflow:report` | Summarize local telemetry — runs, outcomes, cost per agent, review and verification quality. `--html` writes a dashboard. |
+| `/flow:run {ticket}` | The full pipeline. Each run is a new pass folder (`p01`, `p02`, …). |
+| `/flow:brief {ticket}` | Ticket-readiness interview before you start. |
+| `/flow:spec {ticket}` | Regenerate the latest pass's spec. |
+| `/flow:code {ticket}` | Implement the spec, or fix named criteria with `--target-acs`. |
+| `/flow:review [ticket]` | One code review against your standards file. |
+| `/flow:verify {ticket}` | Score the acceptance criteria against the diff. |
+| `/flow:test {ticket}` | Regenerate the QA documents. |
+| `/flow:playwright {ticket} [TS-###]` | Author and run Playwright specs for the ticket. |
+| `/flow:decisions {ticket}` | Append decisions from notes, threads or comments to the decision log — works before the card exists. |
+| `/flow:fetch {ticket}` | Print the card as JSON. |
+| `/flow:datapoints --tables a,b` | List every code path that writes to the named tables (`--endpoint path` for the reverse). |
+| `/flow:log [ticket]` | Show a run log, or list them all. |
+| `/flow:report` | Summarize local telemetry — runs, outcomes, cost per agent, review and verification quality. `--html` writes a dashboard. |
 
 ## Where things land
 
-Everything Specflow writes is a file in your own repos. Nothing is sent
+Everything Flow writes is a file in your own repos. Nothing is sent
 anywhere else.
 
-- **Spec root** — `.spec/` at your repo root by default, or anywhere you
-  point `SPECFLOW_SPEC_ROOT` (for example a separate specs repo). Each
-  ticket gets `features/{ticket}/` with a `decision-log.md` and one
+- **Spec root** — `.flow/.spec/` at your repo root by default, or anywhere
+  you point `FLOW_SPEC_ROOT` (for example a separate specs repo). Each
+  ticket gets a folder under `features/`, `bugfixes/`, `hotfixes/` or
+  `default/` with a `settings.local.json`, a `decision-log.md` and one
   folder per pass.
 - **Telemetry** — `{spec root}/telemetry/{YYYY-MM}/`, one JSONL file per
-  run. It stays local: Specflow drops a `.gitignore` there and never
-  commits or pushes it. Set `SPECFLOW_TELEMETRY_ENABLED=false` to turn
+  run. It stays local: Flow drops a `.gitignore` there and never
+  commits or pushes it. Set `FLOW_TELEMETRY_ENABLED=false` to turn
   it off.
 - **Your codebase** — the feature branch, the implementation, Playwright
-  specs, and the team files in `.specflow/` (`config.md`,
+  specs, and the team files in `.flow/` (`config.md`,
   `{board}-standards.md`, `memory.md`,
   `{board}-playwright-patterns.md`).
 - **Remotes** — the only push is your code feature branch, and only with
@@ -147,7 +148,7 @@ anywhere else.
 ## Contributing
 
 Issues and pull requests are welcome at
-[github.com/christie304/specflow](https://github.com/christie304/specflow).
+[github.com/christie304/flow](https://github.com/christie304/flow).
 Read [CLAUDE.md](CLAUDE.md) before changing the plugin — it covers
 version bumps, the files that must change together and the checks to
 run before merging.
