@@ -23,7 +23,7 @@ FLOW_HOME = Path.home() / ".claude" / "flow"
 BUFFER_DIR = FLOW_HOME / "telemetry-buffer"
 DEFAULT_SPEC_ROOT = ".flow/.spec"
 
-# Written into {SPEC_ROOT}/telemetry/ and {SPEC_ROOT}/reports/ when Flow
+# Written into {repo}/.flow/.telemetry/ and {SPEC_ROOT}/reports/ when Flow
 # creates them, so local data stays out of git unless a team deletes it.
 IGNORE_ALL = "*\n!.gitignore\n"
 
@@ -106,6 +106,12 @@ def resolve_spec_root(repo_root=None, override=None):
 
 def telemetry_enabled(repo_root):
     return str(config_value("FLOW_TELEMETRY_ENABLED", repo_root, "true")).lower() != "false"
+
+
+def telemetry_dir(repo_root):
+    """Local run telemetry for one consuming repo. Not spec-root-relative, so
+    it stays in the repo whatever FLOW_SPEC_ROOT points at."""
+    return Path(repo_root) / ".flow" / ".telemetry"
 
 
 def ensure_ignored_dir(path):

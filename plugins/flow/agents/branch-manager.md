@@ -58,7 +58,7 @@ and never pushes them on their own:
 - **`{SPEC_ROOT}` not inside any git repo** — there is nothing to commit;
   return `commit: "NOT_A_GIT_REPO"` (a normal outcome, not an error).
 
-Telemetry (`{SPEC_ROOT}/telemetry/`) is local-only and never committed or
+Telemetry (`{repo}/.flow/.telemetry/`) is local-only and never committed or
 pushed by this agent, in any mode.
 
 ---
@@ -264,10 +264,10 @@ Runs when any of `--commit`, `--push`, `--open-pr` is present. Operates on the
 1. Stage everything under `{repo}` — the path, not the whole repository, so a
    `--repo {SPEC_ROOT}` call inside a larger specs repo touches only the spec
    root — then unstage telemetry so it is never committed even when a team
-   has deleted `{SPEC_ROOT}/telemetry/.gitignore`:
+   has deleted `.flow/.telemetry/.gitignore` in the consuming repo:
    ```
    git -C {repo} add -A -- .
-   git -C {repo} reset -q -- ':(glob)**/telemetry/*/*__*__*__*.jsonl'
+   git -C {repo} reset -q -- ':(glob)**/.flow/.telemetry/**'
    ```
    Never `git add -f` — ignored files stay ignored.
 2. `git -C {repo} diff --cached --quiet`. If nothing is staged → set

@@ -13,7 +13,7 @@ When `--verify` is passed:
 5. Print the full dry-run trace. **Output style rules:**
    - Do **not** narrate telemetry in the CONFIG block or the trace body. No
      `Telemetry` line, no repo-path callouts, no "first real run will create
-     `{SPEC_ROOT}/telemetry/`" warnings. Telemetry is plumbing —
+     `{repo}/.flow/.telemetry/`" warnings. Telemetry is plumbing —
      the user has already opted in via config, and every mechanic is
      best-effort per this skill's own rules. Silence is the default.
    - Do **not** append a "flags for the real run" or "caveats" section after
@@ -87,6 +87,12 @@ When `--verify` is passed:
       └─ Would implement: {N} ACs from spec
 
   Wave C join — render manifest.md from manifest.json, then proceed
+
+  Drift check — report-only (--drift-block: halts on a high finding)
+  └─ drift-checker
+      └─ Would compare:  {PREV_PASS},{PASS_DIR} against {DECISION_PATH}
+                         (diff vs {DIFF_BRANCH} skipped under --docs-only)
+                         → {absolute DRIFT_PATH}
 
   Wave E — code review (3 parallel reviewers + majority-vote consolidation)
   └─ Would dispatch:  3 parallel code-reviewer runs against files from manifest

@@ -5,7 +5,33 @@ informal semver: patch for prose cleanup, minor for new phases, flags or
 defaults that keep prior invocations working, major for breaking renames
 or removals.
 
-## v2.0.0 — 2026-10-19 — rename plugin from Specflow to Flow
+## v2.1.0 — 2026-10-19 — drift check
+
+### Added
+
+- `flow:drift-checker` sub-agent (1.0.0). It compares every row of the card's
+  `decision-log.md` with the latest pass's spec, manifest and diff, and each
+  pass with the next. It reports findings for unsourced scope, decisions the
+  spec dropped or contradicts, missing validation, security, consequence and
+  stale-test gaps, each with a severity of high, medium or low.
+- Drift check phase after Wave C, before Wave E (before Wave F under
+  `--docs-only`). Output is `drift.md` in the latest pass folder, an artifact
+  of kind `drift_report`, and phase id `phase.drift.check`.
+- `--drift-block` flag on `/flow:run`. Off by default. When on, a high-severity
+  finding halts the run before Wave E with `DRIFT_BLOCKED`.
+- `/flow:drift {ticket} [pass … | --all] [--block]`, which runs the same check
+  on demand without halting the run.
+
+### Changed
+
+- The run skill opens with a notice that `/flow:run` is for demonstration and
+  educational use: slow, token-heavy, and it takes the human out of the loop.
+  The subcommands are the recommended path for real work.
+- Run skill 2.1.0 and plugin 2.1.0. The telemetry schema stays at `"2"`
+  because the additions (one phase id, one artifact kind) are additive.
+- The report script (`flow_report.py`) does not yet count `phase.drift.check`
+  or `drift_report`; they appear in the raw telemetry only.
+
 
 ### Changed
 
@@ -30,8 +56,9 @@ or removals.
   `DIFF_BRANCH`). It replaces the `.claude/settings.local.json` write, so
   nothing under `.claude/` is touched, and the file is not gitignored.
   Nothing reads it yet.
-- Telemetry stays under `{SPEC_ROOT}/telemetry/` with its own `.gitignore`,
-  and the report and flush scripts resolve the same spec root.
+- Telemetry stays local in `{repo}/.flow/.telemetry/`, a fixed folder beside
+  the spec root rather than inside it, with its own `.gitignore`. The flush
+  and report scripts read and write that folder whatever `FLOW_SPEC_ROOT` is.
 - User-level directory `~/.claude/specflow/` is now `~/.claude/flow/` (hook
   log and telemetry buffer).
 - Environment variables renamed from `SPECFLOW_*` to `FLOW_*`, for example
@@ -56,8 +83,9 @@ or removals.
   move a root `.spec/` into `.flow/.spec/` (or keep it by setting
   `FLOW_SPEC_ROOT=.spec`), move each ticket folder into its typed folder
   (`.flow/.spec/features/{ticket}/` for stories and tasks), rename any
-  `SPECFLOW_*` variables in shell profiles or CI, and reinstall the plugin
-  from the `flow` marketplace entry.
+  `SPECFLOW_*` variables in shell profiles or CI, move `{SPEC_ROOT}/telemetry/`
+  to `.flow/.telemetry/` (or delete the old folder, since it is local-only),
+  and reinstall the plugin from the `flow` marketplace entry.
 
 ## v1.0.0 — 2026-10-15 — first public release
 

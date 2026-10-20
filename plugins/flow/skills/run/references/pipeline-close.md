@@ -186,7 +186,7 @@ Suggested PR body — links tie the code back to the paper trail:
 
 **Jira**: {jira-url}
 **Spec**: {SPEC_PATH}
-**Run id**: {run_id} (local telemetry: `{SPEC_ROOT}/telemetry/{YYYY-MM}/{run_id}__…jsonl`)
+**Run id**: {run_id} (local telemetry: `{repo}/.flow/.telemetry/{YYYY-MM}/{run_id}__…jsonl`)
 **Flow pass**: {PASS_DIR}
 **Playwright specs**: {N files under {E2E_SUITE}, or "—"}
 
@@ -348,12 +348,11 @@ partial, failed, `--docs-only`, push off):
 
 ```bash
 python "{PLUGIN_ROOT}/scripts/telemetry_flush.py" flush \
-  --run-id {run_id} \
-  --spec-root {SPEC_ROOT}
+  --run-id {run_id}
 ```
 
 It moves the buffer to
-`{SPEC_ROOT}/telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`
+`{repo}/.flow/.telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`
 (creating the folder's `.gitignore` on first write) and prints one JSON
 line. No commit, no push. Full contract:
 `{SKILL_DIR}/references/telemetry-schema.md` → "Where events go". If it

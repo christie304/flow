@@ -29,8 +29,8 @@ it.
 ## How a run works
 
 ```
-Pre-flight → Wave A → Wave B → Wave C → Wave E → Wave F → Wave D → Wave G → Wave H → Phase 5c → Phases 6–7 → Phase 8
-             fetch    spec     code     review   commit   verify   test     e2e      push (opt-in) handoff  close
+Pre-flight → Wave A → Wave B → Wave C → Drift → Wave E → Wave F → Wave D → Wave G → Wave H → Phase 5c → Phases 6–7 → Phase 8
+             fetch    spec     code     drift    review   commit   verify   test     e2e      push (opt-in) handoff  close
 ```
 
 - **Wave A** fetches the card through the Atlassian MCP (or takes a
@@ -39,6 +39,9 @@ Pre-flight → Wave A → Wave B → Wave C → Wave E → Wave F → Wave D →
 - **Wave B** creates the feature branch and writes `spec.md`.
 - **Wave C** implements the spec and returns a manifest of files and
   acceptance criteria.
+- **Drift check** compares the card's decision log with the latest pass
+  and reports anything the log and the spec disagree on. It only reports
+  unless you pass `--drift-block`, which halts the run on a high finding.
 - **Wave E** reviews the change — one reviewer, escalating to three with
   a majority vote when it finds anything high or medium.
 - **Wave F** commits locally.
@@ -118,6 +121,7 @@ until you push it.
 | `/flow:verify {ticket}` | Score the acceptance criteria against the diff. |
 | `/flow:test {ticket}` | Regenerate the QA documents. |
 | `/flow:playwright {ticket} [TS-###]` | Author and run Playwright specs for the ticket. |
+| `/flow:drift {ticket}` | Report drift between the decision log and the passes' specs, manifests and diffs. `--block` marks high findings as blocking. |
 | `/flow:decisions {ticket}` | Append decisions from notes, threads or comments to the decision log — works before the card exists. |
 | `/flow:fetch {ticket}` | Print the card as JSON. |
 | `/flow:datapoints --tables a,b` | List every code path that writes to the named tables (`--endpoint path` for the reverse). |
@@ -133,8 +137,8 @@ anywhere else.
   you point `FLOW_SPEC_ROOT` (for example a separate specs repo). Each
   ticket gets a folder under `features/`, `bugfixes/`, `hotfixes/` or
   `default/` with a `settings.local.json`, a `decision-log.md` and one
-  folder per pass.
-- **Telemetry** — `{spec root}/telemetry/{YYYY-MM}/`, one JSONL file per
+  folder per pass (each with `drift.md` once the drift check has run).
+- **Telemetry** — `.flow/.telemetry/{YYYY-MM}/` in the repo, one JSONL file per
   run. It stays local: Flow drops a `.gitignore` there and never
   commits or pushes it. Set `FLOW_TELEMETRY_ENABLED=false` to turn
   it off.

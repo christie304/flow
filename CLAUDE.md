@@ -63,8 +63,8 @@ needed.
 
 ## 5. Telemetry stays local
 
-Flow writes telemetry only to the user's own spec root and never
-commits or pushes it. Don't add any code path that sends telemetry or
+Flow writes telemetry only to the consuming repo's `.flow/.telemetry/`
+folder and never commits or pushes it. Don't add any code path that sends telemetry or
 spec artifacts to a remote. If the schema changes, bump
 `schema_version` rather than rewriting the meaning of an existing
 field, so old run files still read correctly.

@@ -1,7 +1,7 @@
 """
 Flow report - summarize local Flow telemetry.
 
-Reads {SPEC_ROOT}/telemetry/**/*.jsonl (one file per run, written at the end
+Reads {repo}/.flow/.telemetry/**/*.jsonl (one file per run, written at the end
 of every Flow command) and prints a markdown report:
 
   headline       runs, success / partial / failed, median and p90 duration,
@@ -24,11 +24,11 @@ network) to {SPEC_ROOT}/reports/flow-report-{YYYYMMDD-HHMM}.html, or
 PATH, and prints its location after the markdown. --json prints the
 aggregated data instead of markdown.
 
-The spec root resolves like everywhere else in Flow: --spec-root, else
-the FLOW_SPEC_ROOT env var, else FLOW_SPEC_ROOT in
-.flow/config.md, else .flow/.spec at the repo root (--repo, else
-CLAUDE_PROJECT_DIR, else the current directory). Read-only apart from the
-HTML file; stdlib only; Python 3.9+.
+The repo is --repo, else CLAUDE_PROJECT_DIR, else the current directory.
+Telemetry is always read from that repo's .flow/.telemetry. The spec root
+(--spec-root, else FLOW_SPEC_ROOT, else .flow/config.md, else .flow/.spec)
+only decides where the HTML file goes. Read-only apart from the HTML file;
+stdlib only; Python 3.9+.
 """
 
 import argparse
@@ -43,7 +43,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from flow_paths import ensure_ignored_dir, expand_path, project_dir, resolve_spec_root, slug  # noqa: E402
+from flow_paths import ensure_ignored_dir, expand_path, project_dir, resolve_spec_root, slug, telemetry_dir  # noqa: E402
 
 STATUSES = ("success", "partial", "failed", "incomplete")
 STATUS_ICON = {"success": "✅", "partial": "⚠️", "failed": "❌", "incomplete": "⏳"}
@@ -824,8 +824,8 @@ def main(argv):
                     help="also write an HTML dashboard (default "
                          "{SPEC_ROOT}/reports/flow-report-{YYYYMMDD-HHMM}.html)")
     ap.add_argument("--json", action="store_true", help="print the aggregated data as JSON instead of markdown")
-    ap.add_argument("--spec-root", help="spec root to read; default: resolved like every Flow command")
-    ap.add_argument("--repo", help="consuming repo root; default: CLAUDE_PROJECT_DIR or the current directory")
+    ap.add_argument("--spec-root", help="spec root for the default HTML path; default: resolved like every Flow command")
+    ap.add_argument("--repo", help="consuming repo root; telemetry is read from its .flow/.telemetry. Default: CLAUDE_PROJECT_DIR or the current directory")
     args = ap.parse_args(argv)
 
     # `--html PROJ-123` almost certainly meant the ticket, not a file name.
@@ -836,7 +836,7 @@ def main(argv):
         spec_root = expand_path(args.spec_root, Path.cwd())
     else:
         spec_root = resolve_spec_root(project_dir(args.repo))
-    tel_dir = spec_root / "telemetry"
+    tel_dir = telemetry_dir(project_dir(args.repo))
 
     events, warnings = read_events(tel_dir) if tel_dir.is_dir() else ([], [])
     for w in warnings[:10]:
@@ -854,8 +854,7 @@ def main(argv):
             msg = (f"No Flow telemetry yet in {tel_dir}.\n\n"
                    "Every /flow command writes one file there when it finishes (unless "
                    "FLOW_TELEMETRY_ENABLED=false). Run something like /flow:run PROJ-123, "
-                   "then try /flow:report again. If your specs live elsewhere, pass --spec-root "
-                   "or set FLOW_SPEC_ROOT.")
+                   "then try /flow:report again.")
         else:
             msg = (f"No runs match the filters ({describe_filters(args)}). {len(all_runs)} runs "
                    f"exist in {tel_dir}; loosen the filters and try again.")

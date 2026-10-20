@@ -2,18 +2,18 @@
 Flow telemetry flush - the last act of every Flow command.
 
 Moves a run's telemetry buffer
-(~/.claude/flow/telemetry-buffer/{run_id}.jsonl) into the local
+(~/.claude/flow/telemetry-buffer/{run_id}.jsonl) into the consuming repo's
 telemetry folder:
 
-  {SPEC_ROOT}/telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl
+  {repo}/.flow/.telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl
 
-and deletes the buffer. No git: Flow never commits or pushes
-telemetry. When the telemetry folder does not exist yet it is created with
-a .gitignore (`*`, `!.gitignore`) so the files stay out of version control
-unless a team deletes that file on purpose.
+and deletes the buffer. The folder does not depend on FLOW_SPEC_ROOT. No
+git: Flow never commits or pushes telemetry. When the folder does not exist
+yet it is created with a .gitignore (`*`, `!.gitignore`) so the files stay
+out of version control unless a team deletes that file on purpose.
 
 Usage:
-  python telemetry_flush.py flush --run-id RID [--spec-root PATH] [--repo PATH]
+  python telemetry_flush.py flush --run-id RID [--repo PATH]
   python telemetry_flush.py recover [--min-age-minutes N] [--repo PATH]
 
 flush prints one JSON line: {ok, run_id, telemetry_path, error}.
@@ -21,13 +21,10 @@ recover flushes every buffer older than N minutes (default 30) - runs that
 crashed before their final step - and prints one JSON line per buffer.
 Exit code is always 0; telemetry never blocks a command.
 
-Spec root, in order: --spec-root, the `spec_root` recorded on the run's
-run.start event, then the usual resolution (FLOW_SPEC_ROOT env var,
-.flow/config.md, default .flow/.spec) against --repo, the run.start `cwd`,
-CLAUDE_PROJECT_DIR or the current directory.
+The repo is --repo, else the run.start `cwd`, else CLAUDE_PROJECT_DIR or
+the current directory.
 
 Env:
-  FLOW_SPEC_ROOT          spec root override
   FLOW_TELEMETRY_ENABLED  'false' -> discard buffers, write nothing
   FLOW_HOOK_LOG           log file. Default ~/.claude/flow/hooks.log
 """
@@ -48,7 +45,7 @@ from flow_paths import (  # noqa: E402
     ensure_ignored_dir,
     find_git_root,
     project_dir,
-    resolve_spec_root,
+    telemetry_dir,
     telemetry_enabled,
     telemetry_relpath,
 )
@@ -89,7 +86,7 @@ def repo_for(start, repo, fallback_repo=None):
     return project_dir(fallback_repo)
 
 
-def flush(run_id, spec_root=None, repo=None, fallback_repo=None):
+def flush(run_id, repo=None, fallback_repo=None):
     result = {"ok": False, "run_id": run_id, "telemetry_path": None, "error": None}
     buf = BUFFER_DIR / (run_id + ".jsonl")
     try:
@@ -104,8 +101,7 @@ def flush(run_id, spec_root=None, repo=None, fallback_repo=None):
             buf.unlink()
             result["ok"] = True
             return result
-        root = resolve_spec_root(repo_root, spec_root or start.get("spec_root"))
-        tel_dir = ensure_ignored_dir(root / "telemetry")
+        tel_dir = ensure_ignored_dir(telemetry_dir(repo_root))
         dest = tel_dir / telemetry_relpath(run_id, start)
         dest.parent.mkdir(parents=True, exist_ok=True)
         if not data.endswith("\n"):
@@ -148,14 +144,13 @@ def main(argv):
     sub.required = True
     f = sub.add_parser("flush", help="flush one run's buffer")
     f.add_argument("--run-id", required=True)
-    f.add_argument("--spec-root", help="resolved SPEC_ROOT; default: resolve it")
     f.add_argument("--repo", help="consuming repo root; default: CLAUDE_PROJECT_DIR or cwd")
     r = sub.add_parser("recover", help="flush buffers left by crashed runs")
     r.add_argument("--min-age-minutes", type=int, default=30)
     r.add_argument("--repo", help="fallback consuming repo root")
     args = ap.parse_args(argv)
     if args.cmd == "flush":
-        print(json.dumps(flush(args.run_id.strip(), args.spec_root, args.repo)))
+        print(json.dumps(flush(args.run_id.strip(), args.repo)))
     else:
         for res in recover(args.min_age_minutes, args.repo):
             print(json.dumps(res))

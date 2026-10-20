@@ -1,6 +1,6 @@
 ---
 name: run
-version: 2.0.0
+version: 2.1.0
 description: >
   Flow is a multi-agent, spec-driven development pipeline. Takes a Jira
   ticket from card to verified, reviewed, tested implementation in one
@@ -10,7 +10,7 @@ description: >
   /flow WEB-42) or a subcommand (/flow brief PROJ-123; direct
   forms: /flow:brief, /flow:spec, /flow:code, /flow:review,
   /flow:verify, /flow:test, /flow:playwright, /flow:decisions,
-  /flow:log, /flow:report, /flow:datapoints), and on phrases
+  /flow:drift, /flow:log, /flow:report, /flow:datapoints), and on phrases
   like "run flow on PROJ-123", "kick off flow for PROJ-123", "run
   the pipeline on this card", "brief me on PROJ-123", "log a decision for
   PROJ-123", "add this to the decision log", "update the decision log",
@@ -34,6 +34,13 @@ description: >
 
 > *From Jira card to spec to verified, reviewed, tested code — in one command.*
 
+> **Heads up: `/flow:run` is for demonstration and educational purposes.**
+> It is slow, token-heavy, and takes the human out of the loop: it walks
+> the whole process in one go instead of pausing for you to review each
+> step. It does work, but it is not the ideal fit for every codebase. For
+> real work, the subcommands (`/flow:spec`, `/flow:code`, `/flow:review`,
+> `/flow:verify`, `/flow:test`) let you check each stage before moving on.
+
 **Paths used throughout the reference files:**
 
 - `{SKILL_DIR}` = `${CLAUDE_SKILL_DIR}` — this skill's directory.
@@ -54,7 +61,7 @@ never load every reference at once.
 
 Every Flow command writes a small JSONL event log **on your
 machine**, one file per run at
-`{SPEC_ROOT}/telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`,
+`{repo}/.flow/.telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`,
 where `{user}` is a slug of `git config user.email`. Events buffer under
 `~/.claude/flow/telemetry-buffer/{run_id}.jsonl` during the run; the
 last act of every command moves the buffer into the telemetry folder
@@ -88,6 +95,7 @@ subcommand.
 | `/flow:run {ticket} --verify` | Dry-run trace with real Jira data, nothing written → `{SKILL_DIR}/references/dry-run.md` |
 | `/flow:run {ticket} --log` · `/flow --log` | Same as `/flow:log` → `{PLUGIN_ROOT}/skills/log/SKILL.md` |
 | `/flow:decisions {ticket} [--decisions {content}]` | Decision log only; works **even before the card exists** (pre-card mode) → `{PLUGIN_ROOT}/skills/decisions/SKILL.md` |
+| `/flow:drift {ticket} [pass … \| --all] [--block]` | Compare the decision log with the latest pass's spec, manifest and diff, and each pass with the next; report drift → `{PLUGIN_ROOT}/skills/drift/SKILL.md` |
 | `/flow:brief {ticket}` | Ticket-readiness interview → `{PLUGIN_ROOT}/skills/brief/SKILL.md` |
 | `/flow:spec {ticket}` | Regenerate the latest pass's spec → `{PLUGIN_ROOT}/skills/spec/SKILL.md` |
 | `/flow:code {ticket} [--target-acs N,N]` | Implement the latest pass's spec (full), or fix named ACs (targeted); no review, verify or commit → `{PLUGIN_ROOT}/skills/code/SKILL.md` |
@@ -131,6 +139,7 @@ them.
 | `flow:branch-manager` | Wave B · B1 (create/checkout), Wave F commits, E/D retry commits, Wave H commit, Phase 5c push and PR, Phase 8 closing spec commit — the only git-touching agent |
 | `flow:spec-author` | Wave B · B2; `/flow:spec` |
 | `flow:implementer` | Wave C (full mode); Wave E and D retries (targeted mode); `/flow:code` |
+| `flow:drift-checker` | Drift check after Wave C (full pipeline and `--docs-only`); `/flow:drift` |
 | `flow:code-reviewer` | Wave E · r1, then r2 + r3 on escalation; `/flow:review` |
 | `flow:ac-verifier` | Wave D · r1, then r2 + r3 on escalation; `/flow:verify` |
 | `flow:test-planner` | Wave G; `/flow:test` |
@@ -148,8 +157,8 @@ Phase 8 close.
 Wave letters are ids, not sequence markers:
 
 ```
-Pre-flight → Wave A → Wave B → Wave C → Wave E → Wave F → Wave D → Wave G → Wave H → Phase 5c → Phase 6/7 → Phase 8
-             fan-out  fan-out  impl    review   commit   verify   test    e2e      push/PR    handoff    close
+Pre-flight → Wave A → Wave B → Wave C → Drift → Wave E → Wave F → Wave D → Wave G → Wave H → Phase 5c → Phase 6/7 → Phase 8
+             fan-out  fan-out  impl    drift    review   commit   verify   test    e2e      push/PR    handoff    close
 ```
 
 ## Guardrail hooks
@@ -160,7 +169,7 @@ The plugin ships two hooks in `{PLUGIN_ROOT}/hooks/`, registered by
 the resolved spec root, stray `.flow/` files, plugin-cache edits, and
 reads of per-user memory) and `flow-telemetry-recover.py` (at `Stop`,
 moves telemetry buffers left by crashed runs into
-`{SPEC_ROOT}/telemetry/`; no git, no network). A
+`{repo}/.flow/.telemetry/`; no git, no network). A
 `[flow-path-guard] blocked …` message is the guard working — fix the
 path, don't route around it.
 
@@ -190,6 +199,7 @@ style guide.
 | `--iterate` | **Default mode.** Create a new pass folder (`p02`, `p03`, …) for this run, preserving every prior pass. Pass index = highest existing `p*` under `{CARD_ROOT}` + 1 (or `p01` if none). See "Pass-index resolution". | true |
 | `--overwrite` | Reuse the latest existing pass folder in place. Falls back to `p01` if no pass exists yet. Mutually exclusive with `--iterate`. | false |
 | `--decisions {content}` | Add a decision-log update before Phase 1. `{content}` may be quoted text, a file path, or a Jira comment URL. With no value, prompt the developer to paste content. | unset |
+| `--drift-block` | After the drift check, halt the run before Wave E when it finds a high-severity finding (the run goes to Phase 8 with `DRIFT_BLOCKED`). Without it the drift check only reports to `drift.md` and the run goes on. | false |
 | `--card-file {path}` | Pre-canned card content, bypassing both Atlassian MCP and the interactive paste prompt. `.json` → the `jira-fetch` success-payload shape (`title`, `description`, `acceptance_criteria`, `ticket`, `parent`, `comments`); `.md`/`.txt`/anything else → freeform, parsed like pasted content (first `#` heading → title; body up to "Acceptance Criteria" → description; checkbox/numbered list → ACs). Sets `source_mode: card_file`. Useful for CI, scripted runs and reproducible testing. | unset |
 | `--handoff` | After Phase 5c, move the Jira card to `HANDOFF_JIRA_STATUS` when that key is set (Phase 6), and write a dev→QA packet to `{CARD_ROOT}/{PASS_DIR}/handoff.md` (Phase 7). Off by default so iterative runs don't produce a packet every time. | false |
 | `--verify` | Dry-run trace with real Jira data — nothing written but the local telemetry file | false |
@@ -207,7 +217,7 @@ Run these in order, reading each reference file when you reach it:
    it at hand: it says what to emit at every boundary below.
 3. **Waves A → C** — `{SKILL_DIR}/references/pipeline-build.md`: wave
    execution semantics, fetch and decision log, branch and spec,
-   implementation and the manifest render.
+   implementation, the manifest render and the drift check.
 4. **Waves E → F → D** — `{SKILL_DIR}/references/pipeline-quality.md`:
    escalated review, the local commit lanes, escalated AC verification,
    and the shared retry budget.

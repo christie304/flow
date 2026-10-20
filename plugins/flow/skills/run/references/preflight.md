@@ -102,7 +102,7 @@ c. **Prepare the per-run buffer** at
    `~/.claude/flow/telemetry-buffer/{run_id}.jsonl`
    (`%USERPROFILE%\.claude\flow\telemetry-buffer\` on Windows) and
    create its parent directory. The finalize step at the end of the
-   command moves it into `{SPEC_ROOT}/telemetry/` (see
+   command moves it into `{repo}/.flow/.telemetry/` (see
    `{SKILL_DIR}/references/telemetry-schema.md` → "Where events go").
 d. **No recovery here.** Leftover buffers from crashed runs are the
    plugin's `Stop` hook's job (`hooks/flow-telemetry-recover.py`).

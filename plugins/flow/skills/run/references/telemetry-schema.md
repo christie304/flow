@@ -1,7 +1,7 @@
 # Flow telemetry — event schema
 
 > Every Flow command writes a small JSONL event file on the
-> developer's machine, under `{SPEC_ROOT}/telemetry/`. Nothing is
+> developer's machine, under `{repo}/.flow/.telemetry/`. Nothing is
 > committed or pushed. The schema below is the contract between the
 > events and whatever reads them — `/flow:report` first of all.
 
@@ -18,11 +18,11 @@ boundaries, not once at the end. A crash mid-run is captured by the
 Every run's events end up in one local file:
 
 ```
-{SPEC_ROOT}/telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl
+{repo}/.flow/.telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl
 ```
 
-- `{SPEC_ROOT}` — the resolved spec root (`FLOW_SPEC_ROOT`, default
-  `.flow/.spec` at the consuming repo root; see `credentials.md`).
+- `{repo}` — the consuming repo root. The folder is fixed under the repo
+  and does not depend on `FLOW_SPEC_ROOT`.
 - `{YYYY-MM}` — the month of the `run_id` timestamp (UTC).
 - `{user}` — slug of `run.start.user`: lowercase, every run of
   non-alphanumeric characters collapsed to `-`, edges trimmed
@@ -49,17 +49,16 @@ bundled script:
 
 ```bash
 python "{PLUGIN_ROOT}/scripts/telemetry_flush.py" flush \
-  --run-id {run_id} \
-  --spec-root {SPEC_ROOT}
+  --run-id {run_id}
 ```
 
-Omit `--spec-root` when pre-flight failed before resolving it; the
-script then resolves the spec root itself (env var, `.flow/config.md`,
-default `.flow/.spec`). What it does:
+The script finds the repo from the run's `cwd` (or `--repo`, when given)
+and works without the spec root, so it runs even when pre-flight failed
+before resolving `SPEC_ROOT`. What it does:
 
 1. Appends the buffer to the run's file under
-   `{SPEC_ROOT}/telemetry/{YYYY-MM}/` and deletes the buffer.
-2. If `{SPEC_ROOT}/telemetry/` did not exist yet, creates it with a
+   `{repo}/.flow/.telemetry/{YYYY-MM}/` and deletes the buffer.
+2. If `{repo}/.flow/.telemetry/` did not exist yet, creates it with a
    `.gitignore` containing `*` and `!.gitignore`, so telemetry stays out
    of git even when the spec root lives inside a repo. A team that wants
    telemetry under version control deletes that `.gitignore`; Flow
@@ -193,7 +192,7 @@ the disk.
 | Field | Type | Notes |
 |-------|------|-------|
 | `phase` | string | The phase that produced it. |
-| `kind` | enum | `spec`, `manifest_json`, `manifest_md`, `code_review`, `ac_checklist`, `validation`, `frontend_test`, `spec_testing`, `playwright_spec`, `test_results`, `handoff`, `flow_log`, `decision_log`, `pull_request`. `playwright_spec` is one event per spec file Wave H writes into the consuming codebase's e2e suite; `test_results` is the `test-plan-results.md` that `/flow:playwright` writes; `handoff` is the Phase 7 `handoff.md`. Extend the enum only when a new artifact kind exists. |
+| `kind` | enum | `spec`, `manifest_json`, `manifest_md`, `code_review`, `ac_checklist`, `validation`, `frontend_test`, `spec_testing`, `playwright_spec`, `test_results`, `handoff`, `flow_log`, `decision_log`, `pull_request`, `drift_report`. `playwright_spec` is one event per spec file Wave H writes into the consuming codebase's e2e suite; `test_results` is the `test-plan-results.md` that `/flow:playwright` writes; `handoff` is the Phase 7 `handoff.md`; `drift_report` is the `drift.md` the drift check writes into the latest pass folder. Extend the enum only when a new artifact kind exists. |
 | `path` | string | Absolute path for local files; URL for a pull request. |
 | `bytes` | integer | Optional. Size for local files; omitted for URLs. |
 
@@ -264,6 +263,7 @@ Every `phase` value Flow emits. Where and with which `outputs` is in
 | `wave.b.join` | — | Wave B join |
 | `wave.c.implementer` | `implementer` | Wave C; `/flow:code` |
 | `wave.c.join` | — | Wave C join |
+| `phase.drift.check` | `drift-checker` | Drift check after Wave C (before Wave E or F); `/flow:drift` |
 | `wave.e.code_review` | `code-reviewer` | Wave E when skipped (`docs-only`) |
 | `wave.e.code_review.r1`, `.r2`, `.r3` | `code-reviewer` | Wave E reviewers; `/flow:review` uses `.r1` |
 | `wave.e.retry_{n}.implementer` | `implementer` | Wave E retry fix (targeted mode) |
@@ -326,17 +326,17 @@ rewritten.
 
 ## Reading telemetry
 
-Everything is local, under `{SPEC_ROOT}/telemetry/`:
+Everything is local, under `{repo}/.flow/.telemetry/`:
 
 - `/flow:report` — headline totals, per-command, per-ticket and
   per-agent tables, quality signals and recent runs, plus an optional
   self-contained HTML dashboard (`--html`). It runs
   `{PLUGIN_ROOT}/scripts/flow_report.py`; see
   `{PLUGIN_ROOT}/skills/report/SKILL.md`.
-- Glob by filename — `{SPEC_ROOT}/telemetry/2026-09/*__dry-run__*.jsonl`,
-  `{SPEC_ROOT}/telemetry/*/*__PROJ-123.jsonl`.
+- Glob by filename — `{repo}/.flow/.telemetry/2026-09/*__dry-run__*.jsonl`,
+  `{repo}/.flow/.telemetry/*/*__PROJ-123.jsonl`.
 - Query the folder as one table, e.g. DuckDB
-  `SELECT * FROM read_json_auto('.flow/.spec/telemetry/**/*.jsonl')`.
+  `SELECT * FROM read_json_auto('.flow/.telemetry/**/*.jsonl')`.
 
 `/flow:report` is a read-only viewer and emits no telemetry of its
 own, so looking at the data never changes it.

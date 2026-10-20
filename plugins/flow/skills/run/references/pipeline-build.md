@@ -193,8 +193,8 @@ after Wave B join, reading `{SPEC_PATH}`.
 
 **Skipped entirely under `--docs-only`.** The code the docs describe
 already shipped; there is nothing to implement. Emit `phase.end` for
-`wave.c.implementer` with `{skipped: true, reason: "docs-only"}` and
-proceed to Wave F. `{MANIFEST_PATH}` is not produced under docs-only —
+`wave.c.implementer` with `{skipped: true, reason: "docs-only"}`, run the
+drift check below, then proceed to Wave F. `{MANIFEST_PATH}` is not produced under docs-only —
 downstream phases that would read it fall back to the spec alone.
 
 #### implementer (full mode)
@@ -242,7 +242,55 @@ Deterministic transform of the manifest (`files_written`, `acs_completed`,
 ```
 
 If `manifest.json` is absent (e.g. no implementation ran this pass), write a
-one-line `manifest.md` saying so rather than fabricating rows. Proceed to
-Wave E.
+one-line `manifest.md` saying so rather than fabricating rows. Run the drift
+check below, then proceed to Wave E.
+
+### Drift check
+
+One dispatch, after the Wave C join and before Wave E (or before Wave F
+under `--docs-only`). It reads the card's decision log against this pass
+and the pass before it, and reports where they have stopped agreeing.
+Report-only by default; `--drift-block` halts the run on a high finding.
+
+**Passes compared.** `{PREV_PASS}` is the highest `p*` folder under
+`{CARD_ROOT}` below `{PASS_DIR}` that has a `spec.md`. With one, the
+passes are `{PREV_PASS},{PASS_DIR}`; with none, `{PASS_DIR}` alone. The
+check runs on `--docs-only` too, but without `--repo`: there is no new
+diff, and the payload records the diff check as skipped.
+
+Dispatch the `flow:drift-checker` agent (Agent tool,
+`subagent_type: "flow:drift-checker"`) with this prompt:
+```
+drift-checker \
+  --card-root {CARD_ROOT} \
+  --ticket {ticket} \
+  --passes {PREV_PASS},{PASS_DIR} \
+  --decision-log {DECISION_PATH} \
+  --repo {consuming codebase root} \
+  --write {DRIFT_PATH} \
+  [--block]
+```
+
+`{PASS_DIR}` is the pass folder name (`p04`), and `{DRIFT_PATH}` is
+`{CARD_ROOT}/{PASS_DIR}/drift.md`. Omit `--decision-log` when
+`{DECISION_PATH}` does not exist, and omit `--repo` under `--docs-only`.
+Include `--block` only when the run was started with `--drift-block`.
+
+On return:
+
+- `ok: false` — log it and carry on. The check is advisory, so this is
+  `phase.error` with `terminal: false`.
+- `ok: true` — copy `drift`, `high`, `medium`, `low` and `blocked` into
+  the run log's summary block. Carry on to the next wave unless
+  `--drift-block` is set and `blocked: true`.
+- `--drift-block` and `blocked: true` — halt the way Wave C halts: skip
+  every later wave and go to Phase 8 with `phase.drift.check` as the
+  terminal phase (`error_code: DRIFT_BLOCKED`). The run log lists the high
+  findings and the next step: record the decision with
+  `/flow:decisions {ticket}` or regenerate the spec with
+  `/flow:spec {ticket}`, then run the pipeline again. Wave C's code stays
+  in the working tree, uncommitted.
+
+Telemetry follows the drift rows in `emission-map.md`.
 
 ---

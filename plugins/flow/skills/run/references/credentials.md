@@ -85,8 +85,10 @@ Layout under it:
 │   ├── decision-log.md         (card-level, persists across passes)
 │   ├── latest.txt
 │   └── p01/, p02/, …           (one folder per pass)
-├── telemetry/                  (local only, gitignored — see telemetry-schema.md)
 └── reports/                    (/flow:report HTML dashboards, gitignored)
+
+{repo}/.flow/
+└── .telemetry/                 (local only, gitignored — see telemetry-schema.md)
 ```
 
 **Flow never pushes spec artifacts.** It commits them locally, and
@@ -191,7 +193,7 @@ recall step.
 each phase boundary — full contract in `references/telemetry-schema.md`.
 Events buffer at `~/.claude/flow/telemetry-buffer/{run_id}.jsonl`
 during a run; the last act of every command moves the buffer to
-`{SPEC_ROOT}/telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`,
+`{repo}/.flow/.telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`,
 where `{user}` is a slug of `git config user.email`
 (`jane.doe@example.com` → `jane-doe-example-com`). When Flow creates
 the telemetry folder it adds a `.gitignore` (`*`, `!.gitignore`), so the

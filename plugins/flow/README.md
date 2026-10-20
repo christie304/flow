@@ -15,7 +15,7 @@ through the run skill's router.
 ```
 plugins/flow/
 ├── .claude-plugin/plugin.json
-├── agents/          # 10 sub-agents, dispatched as flow:{name} through the Agent tool
+├── agents/          # 11 sub-agents, dispatched as flow:{name} through the Agent tool
 ├── hooks/           # hooks.json + flow-path-guard.py + flow-telemetry-recover.py
 ├── scripts/         # flow_paths.py (spec-root resolver), telemetry_flush.py, flow_report.py
 └── skills/
@@ -111,7 +111,7 @@ a local feature branch and stays local unless you pass `--push` or set
 ## Execution order
 
 ```
-Pre-flight → Wave A → Wave B → Wave C → Wave E → Wave F → Wave D → Wave G → Wave H → Phase 5c → Phase 6·7 (flag) → Phase 8
+Pre-flight → Wave A → Wave B → Wave C → Drift → Wave E → Wave F → Wave D → Wave G → Wave H → Phase 5c → Phase 6·7 (flag) → Phase 8
 ```
 
 Wave letters are IDs, not sequence markers. E (review) runs before D
@@ -149,6 +149,10 @@ flowchart TD
 
   joinB --> C["Wave C · implementer --mode full<br/>code + manifest.json · skipped on --docs-only"]
 
+  C --> Drift["Drift check · drift-checker<br/>decision log vs latest pass (+ previous pass) and diff<br/>report-only · --drift-block halts"]
+  Drift -. "blocked · --drift-block" .-> P8
+  Drift --> Er1
+
   subgraph E["Wave E · code review (escalated 3-way)"]
     Er1["r1 · code-reviewer"]
     Egate{"any high or<br/>medium finding?"}
@@ -158,7 +162,6 @@ flowchart TD
     Egate -- yes --> Er23 --> Econ
     Egate -- no --> Econ
   end
-  C --> Er1
   Econ -. "majority high/medium · budget > 0" .-> Efix["↻ implementer --mode targeted<br/>fix → commit"]
   Efix -.-> Er1
 
@@ -207,6 +210,14 @@ flowchart TD
 - **Wave C** writes code into the consuming codebase; it does not
   commit, review or test. The join halts on failure and renders
   `manifest.md` from `manifest.json`.
+- **Drift check** runs once after Wave C, before Wave E (before Wave F
+  under `--docs-only`). It compares the card's decision log with the
+  latest pass and the pass before it, using the spec, manifest and diff,
+  and writes `drift.md` to the latest pass folder. It reports high,
+  medium and low findings — unsourced scope, decisions missing from the
+  spec, missing validation, security and consequence gaps. It only
+  reports unless you pass `--drift-block`, which halts the run before
+  Wave E when a high finding stands.
 - **Wave E** — one reviewer by default, three on a high or medium
   finding. Consolidation dedupes by (file, line, category), tags each
   finding with votes N/M and keeps every finding. Retries fire only when
@@ -239,7 +250,7 @@ flowchart TD
 - **Phase 8** always runs, even after a failure. It writes the summary
   to `flow-log.md`, sets `latest.txt`, makes one closing local spec
   commit for files written after Wave F, emits `run.end`, and moves the
-  run's telemetry into `{SPEC_ROOT}/telemetry/{YYYY-MM}/`.
+  run's telemetry into `{repo}/.flow/.telemetry/{YYYY-MM}/`.
 
 ## Sub-agent roster
 
@@ -257,6 +268,7 @@ each file, recorded in every run's telemetry.
 | **branch-manager** | Wave B · B1 · Wave F · retry commits · Wave H commit · Phase 5c · Phase 8 | The one place git happens. Names and checks out the feature branch, makes local commits, and — only when push is on — pushes the code branch and opens a PR. Refuses to push a separate spec repo. | card → branch · tree → commit, push, PR | git |
 | **spec-author** | Wave B · B2 · `/flow:spec` | Populates the spec template from the card payload, the standards file, the author identity and the branch name. | card + template → spec.md | spec root |
 | **implementer** | Wave C full mode · Wave E/D retries in targeted mode · `/flow:code` | Reads the spec and the relevant code, writes or modifies code to satisfy the acceptance criteria, and returns a manifest of files written and criteria completed or deferred. | spec + standards → code + manifest.json | codebase |
+| **drift-checker** | Drift check after Wave C · `/flow:drift` | Compares the decision log with the latest pass (spec, manifest, diff) and each pass with the next; returns severity-ranked findings for scope the log does not source, decisions the spec dropped, missing validation, security and consequence gaps. | decision log + passes + diff → findings JSON, drift.md | read-only |
 | **code-reviewer** | Wave E · r1, then r2 + r3 · `/flow:review` | Reviews the changed files against your standards file and universal quality rules; returns severity-ranked findings with file, line and category. | files + standards → findings JSON | read-only |
 | **ac-verifier** | Wave D · r1, then r2 + r3 · `/flow:verify` | Scores every acceptance criterion against the diff with `path:line` evidence: pass, partial, fail or manual. | spec + diff → verdicts JSON | read-only |
 | **test-planner** | Wave G · `/flow:test` | From the spec and diff alone, writes a prioritised QA plan, a click-by-click front-end guide and a scenario index with one row per criterion. | spec + diff → 3 docs | spec root |
@@ -287,6 +299,7 @@ and the Phase 8 close.
 | `/flow:fetch {ticket}` | jira-fetch | Prints the card JSON |
 | `/flow:test {ticket}` | test-planner | Regenerates the three test documents |
 | `/flow:playwright {ticket} [TS-###]` | playwright-testing, author then run | The only place Flow runs browser tests |
+| `/flow:drift {ticket} [pass … \| --all] [--block]` | drift-checker | Report drift between the decision log and the passes; `--block` marks high findings as blocking |
 | `/flow:datapoints --tables a,b` · `--endpoint path` | datapoints skill | Every code path that writes to the named tables, or every table one file writes to |
 
 Subcommands run pre-flight in subcommand mode against the latest pass
@@ -299,7 +312,7 @@ and never commit; only the full pipeline makes commits.
                  [--command name] [--html [path]] [--json] [--limit N] [--spec-root path]
 ```
 
-Reads `{SPEC_ROOT}/telemetry/**/*.jsonl` and prints headline totals
+Reads `{repo}/.flow/.telemetry/**/*.jsonl` and prints headline totals
 (runs, outcomes, median and p90 duration, tokens and tool calls), a
 per-command table, a per-ticket table, cost per agent, quality signals
 (review findings by severity, acceptance-criteria verdicts, escalations,
@@ -324,8 +337,8 @@ cards until a fetch resolves their type).
   `code-review.md`, `acceptance-criteria.md`, `validation.md`,
   `front-end-testing.md`, `spec-testing.md`, `flow-log.md`,
   `handoff.md` (with `--handoff`), `test-plan-results.md` (from
-  `/flow:playwright`)
-- `telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`,
+  `/flow:playwright`), `drift.md` (from the drift check)
+- `{repo}/.flow/.telemetry/{YYYY-MM}/{run_id}__{user}__{command}__{ticket}.jsonl`,
   gitignored by default
 - `reports/`, the HTML dashboards, gitignored by default
 
@@ -356,6 +369,7 @@ Nothing else leaves your machine.
 | `--push` / `--no-push` · `--pr off\|draft\|ready` | Control the 5c code push only. Defaults come from `AUTO_PUSH` (off) and `PR_MODE` (draft). |
 | `--retry-budget N` | Total fix cycles shared across Waves E and D. Default 2. |
 | `--decisions {content}` | Activates the A2 lane. |
+| `--drift-block` | Halts the run before Wave E when the drift check finds a high-severity finding. Off by default: the check reports only. |
 | `--card-file {path}` | Pre-canned card content (`.json` in the jira-fetch shape, or freeform `.md`). A1 becomes a no-op; useful for CI and when the Atlassian MCP is unavailable. |
 | `--base` · `--diff` · `--branch-format` | Base branch, base of the diff Waves D and G score against, and the branch naming template. |
 | `--e2e-dir {path}` | Where Wave H and `/flow:playwright` look for the e2e suite. Overrides `PLAYWRIGHT_E2E_DIR` (default `e2e`). |

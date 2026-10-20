@@ -8,7 +8,7 @@ into `~/.claude/hooks/` and nothing to add to `settings.json`.
 | Script | Event | What it does |
 |---|---|---|
 | `flow-path-guard.py` | `PreToolUse` on `Write`, `Edit`, `NotebookEdit`, `Bash`, `Read` | Blocks writes into `~/.claude/plugins/cache/**`, writes into any `.spec/` folder outside the resolved spec root, `.flow/` files other than the team files (`config.md`, `memory.md`, `{board-key}-standards.md`, `{board-key}-playwright-patterns.md`), and `Read` calls on per-user memory. Bash commands only get a warning, since parsing paths out of shell text is heuristic. |
-| `flow-telemetry-recover.py` | `Stop` | Moves telemetry buffers older than 30 minutes — left by runs that crashed before their final step — from `~/.claude/flow/telemetry-buffer/` into `{SPEC_ROOT}/telemetry/`, via `scripts/telemetry_flush.py recover`. No git, no network. A fast no-op when the buffer folder is empty. |
+| `flow-telemetry-recover.py` | `Stop` | Moves telemetry buffers older than 30 minutes — left by runs that crashed before their final step — from `~/.claude/flow/telemetry-buffer/` into `{repo}/.flow/.telemetry/`, via `scripts/telemetry_flush.py recover`. No git, no network. A fast no-op when the buffer folder is empty. |
 
 The recovery hook is deliberately not registered on `SubagentStop`.
 Flow's sub-agents are plugin agents, and recovering after every lane

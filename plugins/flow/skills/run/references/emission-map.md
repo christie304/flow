@@ -46,6 +46,8 @@ Rules that apply to every event:
 | Wave C dispatch | `phase.start` `wave.c.implementer`. Under `--docs-only`, only `phase.end` with `{skipped: true, reason: "docs-only"}` |
 | Wave C `implementer` returns | `phase.end` `wave.c.implementer` with `{acs_completed, acs_deferred, files_written_count}`; `phase.error` (`terminal: true`) on failure — implementation is critical-path |
 | Wave C join complete | `phase.end` `wave.c.join` + `artifact` events for `manifest_json` and `manifest_md` |
+| Drift check dispatch (after the Wave C join, before Wave E — or before Wave F under `--docs-only`; never skipped) | `phase.start` `phase.drift.check` |
+| Drift check returns | `phase.end` `phase.drift.check` with `{drift, high, medium, low, passes_compared_count, blocked}` + `artifact` (kind: `drift_report`, path: `{DRIFT_PATH}`) when the report was written; `phase.error` (`terminal: false`) when the agent returned `ok: false`. With `--drift-block` and `blocked: true`, also `phase.error` (`terminal: true`, `error_code: DRIFT_BLOCKED`) after the `phase.end` — the run halts to Phase 8 |
 | Wave E dispatch (solo — always fires) | `phase.start` `wave.e.code_review.r1`; after a retry, `wave.e.retry_{n}.r1`. Under `--docs-only`, only `phase.end` `wave.e.code_review` with `{skipped: true, reason: "docs-only"}` |
 | Wave E solo returns | `phase.end` `wave.e.code_review.r1` with `{findings: {high, medium, low}}`; `phase.error` (`terminal: false`) on failure — forces escalation |
 | Wave E escalation dispatch (only if r1 flagged high/medium or failed) | `phase.start` × 2: `wave.e.code_review.r2`, `wave.e.code_review.r3` (retry rounds: `wave.e.retry_{n}.r{2\|3}`) |
@@ -78,7 +80,7 @@ Rules that apply to every event:
 
 For `/flow:spec`, `/flow:code`, `/flow:review`,
 `/flow:verify`, `/flow:test`, `/flow:fetch`, `/flow:brief`,
-`/flow:decisions`, `/flow:playwright` and `/flow:log` (also
+`/flow:decisions`, `/flow:playwright`, `/flow:drift` and `/flow:log` (also
 reached as `/flow spec …` and `--log` through the run skill's
 router): emit `run.start` with the matching `invocation`, one
 `phase.start` / `phase.end` pair for the sub-agent invoked (phase ids in
@@ -101,6 +103,10 @@ commits them or the next full pipeline run's commits pick them up.
   before the author dispatch and a single `phase.end` whose `usage` sums
   both (`dispatches: 2`). Suffixed ids such as
   `wave.h.playwright_testing.author` are not canonical.
+- `/flow:drift` reuses `phase.drift.check` with the same outputs,
+  `blocked` included, and the `drift_report` artifact for `{DRIFT_PATH}`.
+  It has no `--drift-block` halt: the command reports, it does not run a
+  pipeline.
 - `/flow:report` and `/flow:datapoints` emit nothing — the report
   is a read-only viewer over this data, and datapoints is a standalone
   codebase search.

@@ -4,11 +4,11 @@ Flow telemetry recovery hook - Stop.
 Shipped with the flow plugin and registered by hooks/hooks.json, so it
 is active whenever the plugin is enabled. No manual install.
 
-Every Flow command ends by moving its telemetry buffer into the local
-telemetry folder (scripts/telemetry_flush.py flush). This hook recovers
+Every Flow command ends by moving its telemetry buffer into the repo's
+.flow/.telemetry folder (scripts/telemetry_flush.py flush). This hook recovers
 buffers from runs that never got that far (crash, abort): at the end of
 each turn it runs `telemetry_flush.py recover`, which moves any buffer
-older than 30 minutes into {SPEC_ROOT}/telemetry/. The age check leaves
+older than 30 minutes into {repo}/.flow/.telemetry/. The age check leaves
 alone a live run that spans several turns, such as a /flow:brief
 interview.
 
