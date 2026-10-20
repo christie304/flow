@@ -42,11 +42,11 @@ and which ACs have no matching row yet. This coverage is **advisory only**
 
 | Input | Type | Required | Source |
 |-------|------|----------|--------|
-| `spec_path` | File path | Yes | `{SPEC_ROOT}/features/{ticket}/p01/spec.md` |
+| `spec_path` | File path | Yes | `{CARD_ROOT}/p01/spec.md` |
 | `diff_range` | string | Yes | e.g. `origin/main...HEAD` |
 | `branch_name` | string | Yes | Current feature branch |
 | `ticket` | string | Yes | Full ticket key for output headers |
-| `decision_log_path` | File path | Optional | `{SPEC_ROOT}/features/{ticket}/decision-log.md` (card-level) |
+| `decision_log_path` | File path | Optional | `{CARD_ROOT}/decision-log.md` (card-level) |
 
 Flags:
 
@@ -317,20 +317,20 @@ Emit the JSON success payload. No wrapping prose.
 ```
 # Single-verifier mode — writes the final checklist itself
 ac-verifier \
-  --spec .spec/features/PROJ-123/p01/spec.md \
+  --spec .flow/.spec/features/PROJ-123/p01/spec.md \
   --diff-range origin/main...HEAD \
   --branch feature/PROJ-123-profile-email-opt-in \
   --ticket PROJ-123 \
-  --decision-log .spec/features/PROJ-123/decision-log.md \
-  --write .spec/features/PROJ-123/p01/acceptance-criteria.md
+  --decision-log .flow/.spec/features/PROJ-123/decision-log.md \
+  --write .flow/.spec/features/PROJ-123/p01/acceptance-criteria.md
 
 # Wave D three-way mode — one of three concurrent verifiers
 ac-verifier \
-  --spec .spec/features/PROJ-123/p01/spec.md \
+  --spec .flow/.spec/features/PROJ-123/p01/spec.md \
   --diff-range origin/main...HEAD \
   --branch feature/PROJ-123-profile-email-opt-in \
   --ticket PROJ-123 \
-  --decision-log .spec/features/PROJ-123/decision-log.md \
+  --decision-log .flow/.spec/features/PROJ-123/decision-log.md \
   --reviewer-id r1 \
-  --write .spec/features/PROJ-123/p01/.verify/r1.json
+  --write .flow/.spec/features/PROJ-123/p01/.verify/r1.json
 ```

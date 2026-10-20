@@ -38,7 +38,7 @@ useful. A test plan generated from the spec + diff alone tests what the spec
 
 | Input | Type | Required | Source |
 |-------|------|----------|--------|
-| `spec_path` | File path | Yes | `{SPEC_ROOT}/features/{ticket}/p01/spec.md` |
+| `spec_path` | File path | Yes | `{CARD_ROOT}/p01/spec.md` |
 | `diff_range` | string | Yes | e.g. `origin/main...HEAD` |
 | `branch_name` | string | Yes | Current feature branch |
 | `ticket` | string | Yes | Full ticket key for output headers |
@@ -404,14 +404,14 @@ is exactly when test plans earn their keep.
 
 ```
 test-planner \
-  --spec .spec/features/PROJ-123/p01/spec.md \
+  --spec .flow/.spec/features/PROJ-123/p01/spec.md \
   --diff-range origin/main...HEAD \
   --branch feature/PROJ-123-profile-email-opt-in \
   --ticket PROJ-123 \
   --jira-url https://your-site.atlassian.net/browse/PROJ-123 \
-  --write .spec/features/PROJ-123/p01/validation.md \
-  --frontend-guide .spec/features/PROJ-123/p01/front-end-testing.md \
-  --spec-testing-guide .spec/features/PROJ-123/p01/spec-testing.md
+  --write .flow/.spec/features/PROJ-123/p01/validation.md \
+  --frontend-guide .flow/.spec/features/PROJ-123/p01/front-end-testing.md \
+  --spec-testing-guide .flow/.spec/features/PROJ-123/p01/spec-testing.md
 ```
 
 ---
@@ -425,8 +425,8 @@ test-planner \
   "scenario_count": 12,
   "priorities": { "P0": 3, "P1": 5, "P2": 3, "P3": 1 },
   "risk_level": "medium",
-  "test_plan_path": ".spec/features/PROJ-123/p01/validation.md",
-  "frontend_guide_path": ".spec/features/PROJ-123/p01/front-end-testing.md",
+  "test_plan_path": ".flow/.spec/features/PROJ-123/p01/validation.md",
+  "frontend_guide_path": ".flow/.spec/features/PROJ-123/p01/front-end-testing.md",
   "frontend_applicable": true
 }
 ```

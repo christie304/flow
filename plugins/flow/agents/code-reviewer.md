@@ -283,7 +283,7 @@ code-reviewer \
   --files src/components/UserProfile.tsx,src/api/saveProfile.ts,src/components/UserProfile.test.tsx \
   --standards .flow/PROJ-standards.md \
   --ticket PROJ-123 \
-  --write .spec/features/PROJ-123/p01/code-review.md
+  --write .flow/.spec/features/PROJ-123/p01/code-review.md
 
 # Only High/Medium findings (skip cosmetic)
 code-reviewer \
@@ -332,6 +332,6 @@ code-reviewer --files file1.py,file2.py
   ],
   "summary": { "high": 2, "medium": 1, "low": 0, "total": 3 },
   "clean_files": ["src/components/UserProfile.test.tsx"],
-  "findings_path": ".spec/features/PROJ-123/p01/code-review.md"
+  "findings_path": ".flow/.spec/features/PROJ-123/p01/code-review.md"
 }
 ```

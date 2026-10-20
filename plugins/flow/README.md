@@ -131,13 +131,14 @@ flowchart TD
 
   pre["<b>Pre-flight</b> · orchestrator<br/>launch.json guard · .flow/config.md · {board-key}-standards.md<br/>.flow/memory.md · resolve SPEC_ROOT / CARD_ROOT / PASS_DIR<br/>scaffold decision-log.md · run.start telemetry · source mode"]
 
-  subgraph A["Wave A · fan-out"]
-    A1["A1 · jira-fetch<br/>card → JSON"]
+  subgraph A["Wave A · card, then decisions + settings"]
+    A1["A1 · jira-fetch<br/>card → JSON, creates card folder"]
     A2["A2 · decision-logger<br/>only with --decisions"]
-    A3["A3 · settings write<br/>.claude/settings.local.json"]
+    A3["A3 · settings write<br/>{CARD_ROOT}/settings.local.json"]
   end
-  pre --> A1 & A2 & A3
-  A1 & A2 & A3 --> joinA["join · halt on lane failure · episodic recall ≤ 2 sibling decision logs"]
+  pre --> A1
+  A1 --> A2 & A3
+  A2 & A3 --> joinA["join · halt on lane failure · episodic recall ≤ 2 sibling decision logs"]
 
   subgraph B["Wave B · post-fetch"]
     B1["B1 · branch-manager<br/>setup mode · skipped on --docs-only"]
@@ -192,12 +193,14 @@ flowchart TD
 
 - **Pre-flight** runs before every command and hard-fails only when the
   card source cannot be resolved. It resolves the spec root
-  (`FLOW_SPEC_ROOT` env var, then `.flow/config.md`, then `.spec`
+  (`FLOW_SPEC_ROOT` env var, then `.flow/config.md`, then `.flow/.spec`
   at the repo root) and the spec commit mode: `same-repo`, `separate`
   or `none`. Source mode is `jira`, `paste` or `card_file`.
 - **Wave A** — A1 reads Jira via MCP and is a no-op on paste /
-  card_file. A2 is append-only. A3 writes `BASE_BRANCH` + `DIFF_BRANCH`
-  into the gitignored `.claude/settings.local.json`.
+  card_file. It then creates the card folder under `features`,
+  `bugfixes`, `hotfixes` or, for paste, `default`. A2 is append-only.
+  A3 writes `{"BASE_BRANCH": ..., "DIFF_BRANCH": ...}` as JSON to
+  `settings.local.json` in the card folder.
 - **Wave B** — B1 is the only git-touching agent and names the branch
   from the parent story. B2's spec is staged while B1 is still checking
   out.
@@ -308,12 +311,16 @@ dark mode; `--json` prints the aggregated data.
 
 ### Spec root
 
-`{SPEC_ROOT}` — `.spec` at the consuming repo root unless
-`FLOW_SPEC_ROOT` points elsewhere.
+`{SPEC_ROOT}` — `.flow/.spec` at the consuming repo root unless
+`FLOW_SPEC_ROOT` points elsewhere. Each card lives in one of four type
+folders: `features/`, `bugfixes/`, `hotfixes/` or `default/` (pasted
+cards until a fetch resolves their type).
 
-- `features/{ticket}/decision-log.md` and `latest.txt`, kept across
+- `{type}/{ticket}/settings.local.json`: `BASE_BRANCH` and `DIFF_BRANCH`
+  for the card, written by A3
+- `{type}/{ticket}/decision-log.md` and `latest.txt`, kept across
   passes
-- `features/{ticket}/p{NN}/`: `spec.md`, `manifest.json`, `manifest.md`,
+- `{type}/{ticket}/p{NN}/`: `spec.md`, `manifest.json`, `manifest.md`,
   `code-review.md`, `acceptance-criteria.md`, `validation.md`,
   `front-end-testing.md`, `spec-testing.md`, `flow-log.md`,
   `handoff.md` (with `--handoff`), `test-plan-results.md` (from
@@ -327,7 +334,6 @@ dark mode; `--json` prints the aggregated data.
 - The feature branch, named from the parent story
 - Implementation files from Wave C and any retry fixes
 - Playwright spec files and test data inside your e2e suite
-- `.claude/settings.local.json` (gitignored) from A3
 - `.flow/config.md`, `.flow/{board-key}-standards.md`,
   `.flow/memory.md`, `.flow/{board-key}-playwright-patterns.md`
   — team files you commit

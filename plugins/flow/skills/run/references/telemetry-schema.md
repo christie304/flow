@@ -5,7 +5,7 @@
 > committed or pushed. The schema below is the contract between the
 > events and whatever reads them — `/flow:report` first of all.
 
-**Schema version `1`.**
+**Schema version `2`.**
 
 The design is **event-driven, not summary-driven**. Emit at phase
 boundaries, not once at the end. A crash mid-run is captured by the
@@ -22,7 +22,7 @@ Every run's events end up in one local file:
 ```
 
 - `{SPEC_ROOT}` — the resolved spec root (`FLOW_SPEC_ROOT`, default
-  `.spec` at the consuming repo root; see `credentials.md`).
+  `.flow/.spec` at the consuming repo root; see `credentials.md`).
 - `{YYYY-MM}` — the month of the `run_id` timestamp (UTC).
 - `{user}` — slug of `run.start.user`: lowercase, every run of
   non-alphanumeric characters collapsed to `-`, edges trimmed
@@ -55,7 +55,7 @@ python "{PLUGIN_ROOT}/scripts/telemetry_flush.py" flush \
 
 Omit `--spec-root` when pre-flight failed before resolving it; the
 script then resolves the spec root itself (env var, `.flow/config.md`,
-default `.spec`). What it does:
+default `.flow/.spec`). What it does:
 
 1. Appends the buffer to the run's file under
    `{SPEC_ROOT}/telemetry/{YYYY-MM}/` and deletes the buffer.
@@ -336,7 +336,7 @@ Everything is local, under `{SPEC_ROOT}/telemetry/`:
 - Glob by filename — `{SPEC_ROOT}/telemetry/2026-09/*__dry-run__*.jsonl`,
   `{SPEC_ROOT}/telemetry/*/*__PROJ-123.jsonl`.
 - Query the folder as one table, e.g. DuckDB
-  `SELECT * FROM read_json_auto('.spec/telemetry/**/*.jsonl')`.
+  `SELECT * FROM read_json_auto('.flow/.spec/telemetry/**/*.jsonl')`.
 
 `/flow:report` is a read-only viewer and emits no telemetry of its
 own, so looking at the data never changes it.

@@ -33,7 +33,7 @@ separate orchestrator decisions.
 
 | Input | Type | Required | Source |
 |-------|------|----------|--------|
-| `spec_path` | File path | Yes | `{SPEC_ROOT}/features/{ticket}/p01/spec.md` |
+| `spec_path` | File path | Yes | `{CARD_ROOT}/p01/spec.md` |
 | `standards_path` | File path | No | `.flow/{board-key}-standards.md` at the consuming repo root |
 | `mode` | enum | Yes | `full` or `targeted` |
 | `target_acs` | array of ints | Conditional | Required when `mode=targeted`, e.g. `[3, 5]` |
@@ -272,15 +272,15 @@ every invocation gets a fresh, scoped contract.
 ```
 # Full implementation from a fresh spec
 implementer \
-  --spec .spec/features/PROJ-123/p01/spec.md \
+  --spec .flow/.spec/features/PROJ-123/p01/spec.md \
   --standards .flow/PROJ-standards.md \
   --mode full \
   --ticket PROJ-123 \
-  --manifest .spec/features/PROJ-123/p01/manifest.json
+  --manifest .flow/.spec/features/PROJ-123/p01/manifest.json
 
 # Targeted re-implementation after ac-verifier flagged ACs 3 and 5
 implementer \
-  --spec .spec/features/PROJ-123/p01/spec.md \
+  --spec .flow/.spec/features/PROJ-123/p01/spec.md \
   --standards .flow/PROJ-standards.md \
   --mode targeted \
   --target-acs 3,5 \
@@ -288,7 +288,7 @@ implementer \
 
 # Dry-run to see what would be written
 implementer \
-  --spec .spec/features/PROJ-123/p01/spec.md \
+  --spec .flow/.spec/features/PROJ-123/p01/spec.md \
   --mode full \
   --ticket PROJ-123 \
   --dry-run
@@ -335,6 +335,6 @@ implementer \
   "acs_completed": [1, 2, 3],
   "acs_deferred": [],
   "dry_run": false,
-  "manifest_path": ".spec/features/PROJ-123/p01/manifest.json"
+  "manifest_path": ".flow/.spec/features/PROJ-123/p01/manifest.json"
 }
 ```

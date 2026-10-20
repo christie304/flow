@@ -42,7 +42,7 @@ adding a new row (a correction or supersession), not by editing history.
 | Input | Type | Required | Source |
 |-------|------|----------|--------|
 | `content` | string | Yes | Already-resolved text (caller has fetched URLs / read files) |
-| `decision_log_path` | File path | Yes | Card-level `{SPEC_ROOT}/features/{ticket}/decision-log.md` (may not yet exist) |
+| `decision_log_path` | File path | Yes | Card-level `{CARD_ROOT}/decision-log.md` (may not yet exist) |
 | `template_path` | File path | Yes | `${CLAUDE_PLUGIN_ROOT}/skills/run/references/decision-log-template.md` |
 | `ticket` | string | Yes | Full ticket key (or placeholder if pre-card mode) |
 | `card` | JSON object | Optional | jira-fetch payload, used to populate the header on first creation |
@@ -65,7 +65,7 @@ Flags:
 {
   "ok": true,
   "ticket": "PROJ-123",
-  "decision_log_path": ".spec/features/PROJ-123/decision-log.md",
+  "decision_log_path": ".flow/.spec/features/PROJ-123/decision-log.md",
   "log_existed": true,
   "rows_before": 3,
   "rows_after": 5,
@@ -269,12 +269,12 @@ logger adds a new row that references the original.
 ```
 decision-logger \
   --content "{resolved text from --decisions input}" \
-  --decision-log-path .spec/features/PROJ-123/decision-log.md \
+  --decision-log-path .flow/.spec/features/PROJ-123/decision-log.md \
   --template ${CLAUDE_PLUGIN_ROOT}/skills/run/references/decision-log-template.md \
   --ticket PROJ-123 \
   --card {jira-fetch payload, or null} \
   --source-label "chat thread 2026-04-30" \
-  --write .spec/features/PROJ-123/decision-log.md
+  --write .flow/.spec/features/PROJ-123/decision-log.md
 ```
 
 ---

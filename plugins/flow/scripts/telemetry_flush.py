@@ -23,7 +23,7 @@ Exit code is always 0; telemetry never blocks a command.
 
 Spec root, in order: --spec-root, the `spec_root` recorded on the run's
 run.start event, then the usual resolution (FLOW_SPEC_ROOT env var,
-.flow/config.md, default .spec) against --repo, the run.start `cwd`,
+.flow/config.md, default .flow/.spec) against --repo, the run.start `cwd`,
 CLAUDE_PROJECT_DIR or the current directory.
 
 Env:

@@ -20,7 +20,7 @@ Rules:
 Spec root, resolved the same way the skills do it:
   1. FLOW_SPEC_ROOT environment variable;
   2. FLOW_SPEC_ROOT in {CLAUDE_PROJECT_DIR}/.flow/config.md;
-  3. {CLAUDE_PROJECT_DIR}/.spec.
+  3. {CLAUDE_PROJECT_DIR}/.flow/.spec.
 Relative values are joined with the project's repo root; ~ is expanded.
 
 Env:
@@ -52,7 +52,7 @@ except Exception:  # fall back to a minimal resolver
         return Path(explicit or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
 
     def resolve_spec_root(repo_root=None, override=None):
-        raw = os.environ.get("FLOW_SPEC_ROOT", "").strip() or ".spec"
+        raw = os.environ.get("FLOW_SPEC_ROOT", "").strip() or ".flow/.spec"
         p = Path(os.path.expanduser(raw))
         if not p.is_absolute():
             p = Path(repo_root or project_dir()) / p
@@ -148,7 +148,7 @@ def classify(raw, tool, spec_root, cwd):
             "path is inside a .spec/ folder that is not the resolved spec root ("
             + str(spec_root)
             + "). Flow writes spec artifacts only under FLOW_SPEC_ROOT (env var, "
-            ".flow/config.md, or the default .spec at the repo root). Fix the path, or "
+            ".flow/config.md, or the default .flow/.spec at the repo root). Fix the path, or "
             "set FLOW_SPEC_ROOT if this repo keeps its specs elsewhere.",
         )
 

@@ -48,7 +48,7 @@ can write is the optional HTML dashboard.
 
    The script resolves `{SPEC_ROOT}` exactly as every Flow command
    does (`FLOW_SPEC_ROOT` env var, then `.flow/config.md`, then
-   `.spec` at the repo root). It needs Python 3.9+ and nothing else. If
+   `.flow/.spec` at the repo root). It needs Python 3.9+ and nothing else. If
    `python` is not found, try `python3`.
 
 2. Show the script's markdown output **as-is** — do not summarize,

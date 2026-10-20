@@ -4,7 +4,7 @@ This is the single source of truth for the decision log Flow writes at the
 **card level** (one per Jira card, persisting across passes). Any phase or
 sub-agent that references the decision-log template loads it from this file.
 
-Write the populated decision log to `{DECISION_PATH}` — the resolved `{CARD_ROOT}/decision-log.md` (card-level, sits **above** the per-pass `p01/`, `p02/`, ... folders). `CARD_ROOT` is `{SPEC_ROOT}/features/{ticket}`; see `references/preflight.md` → "Spec path resolution" for how `SPEC_ROOT` is resolved.
+Write the populated decision log to `{DECISION_PATH}` — the resolved `{CARD_ROOT}/decision-log.md` (card-level, sits **above** the per-pass `p01/`, `p02/`, ... folders). `CARD_ROOT` is `{SPEC_ROOT}/{type}/{ticket}`; see `references/preflight.md` → "Spec path resolution" for how `SPEC_ROOT` and the type folder are resolved.
 
 ---
 

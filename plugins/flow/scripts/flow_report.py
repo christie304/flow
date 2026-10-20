@@ -26,7 +26,7 @@ aggregated data instead of markdown.
 
 The spec root resolves like everywhere else in Flow: --spec-root, else
 the FLOW_SPEC_ROOT env var, else FLOW_SPEC_ROOT in
-.flow/config.md, else .spec at the repo root (--repo, else
+.flow/config.md, else .flow/.spec at the repo root (--repo, else
 CLAUDE_PROJECT_DIR, else the current directory). Read-only apart from the
 HTML file; stdlib only; Python 3.9+.
 """

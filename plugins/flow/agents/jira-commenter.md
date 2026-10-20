@@ -189,7 +189,7 @@ Compare `ticket.assignee.accountId` to the authenticated user's `accountId`:
 ## Example invocations
 
 ```
-jira-commenter PROJ-123 "Spec drafted for review: .spec/features/PROJ-123/p01/spec.md"
+jira-commenter PROJ-123 "Spec drafted for review: .flow/.spec/features/PROJ-123/p01/spec.md"
 jira-commenter PROJ-123 "Ready for review" --dry-run
 jira-commenter WEB-42 "Implementation complete, ACs verified" --cloud-id c4e3...
 ```

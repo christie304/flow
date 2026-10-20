@@ -227,7 +227,7 @@ jira-fetch PROJ-124 --epic
 jira-fetch PROJ-123 --no-comments
 jira-fetch WEB-42 --comments 10 --epic
 jira-fetch 124 PROJ --epic
-jira-fetch PROJ-123 --write .spec/features/PROJ-123/card.json
+jira-fetch PROJ-123 --write .flow/.spec/features/PROJ-123/card.json
 ```
 
 ---

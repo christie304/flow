@@ -26,7 +26,7 @@ When `--verify` is passed:
    - **Show fully-resolved values** in the trace, not template
      placeholders. `Branch format` shows the resolved branch name (with
      the template shown parenthetically for reference). Every path is
-     absolute — never a relative `.spec/…` string. Every `{token}` is expanded to its actual value
+     absolute — never a relative `.flow/.spec/…` string. Every `{token}` is expanded to its actual value
      before rendering.
 
 ```
@@ -51,21 +51,23 @@ When `--verify` is passed:
 
   ── DRY RUN ──────────────────────────────────────────────────────
 
-  Wave A — fan-out (parallel)
+  Wave A — A1, then A2 and A3
   ├─ A1 jira-fetch  {or: A1 no-op (source_mode: paste|card_file)}
   │   └─ {jira mode:}  Fetched:  {ticket} "{title}"
   │                    Parent:  {parent-ticket} "{parent-title}"  (or: no parent — card IS the story)
   │                    ACs:     {N}
   │                    Labels:  {labels}
+  │                    Card folder: {absolute CARD_ROOT}  (type: {features | bugfixes | hotfixes})
   │   └─ {paste/card_file mode:} Staged from step 7: {N} ACs, title "{title}"
   │                              (jira-fetch not called)
-  ├─ A2 decision-logger
+  │                              Card folder: {absolute CARD_ROOT}  (type: default)
+  ├─ A2 decision-logger  {or: SKIPPED (--decisions not passed)}
   │   └─ Decision log:  {absolute DECISION_PATH}
   │                     {would create blank | exists, N rows}
-  │                     {if --decisions passed: would append from {source label} (pre-card mode, header sync after join)}
+  │                     {if --decisions passed: would append from {source label}}
   └─ A3 settings.local.json
-      └─ Would write:  {absolute path to .claude/settings.local.json}
-                       BASE_BRANCH={base}, DIFF_BRANCH={diff}
+      └─ Would write:  {absolute CARD_ROOT}/settings.local.json
+                       {"BASE_BRANCH": "{base}", "DIFF_BRANCH": "{diff}"}
 
   Wave A join — proceed
 

@@ -48,9 +48,10 @@ current wave has returned a status.
 
 ---
 
-### Wave A — fan-out (post pre-flight)
+### Wave A — card fetch, then decisions and settings (post pre-flight)
 
-Three independent lanes, dispatched simultaneously after pre-flight completes.
+A1 creates the card folder, so A2 and A3 run after it. A2 and A3 are
+independent of each other and may run together.
 
 #### A1 — jira-fetch (or no-op with staged payload)
 
@@ -62,7 +63,9 @@ Behavior depends on `source_mode` resolved during pre-flight step 7:
   jira-fetch {ticket} --comments 5 --epic
   ```
   On `ok: true`: extract `title`, `description`, `acceptance_criteria`,
-  `issue_type`, `labels`, `parent`, `parent_card`, `comments`.
+  `issue_type`, `labels`, `parent`, `parent_card`, `comments`. Then create
+  `CARD_ROOT` under the type those fields map to, as set out in pre-flight
+  "Spec path resolution", and flush the held pre-flight log lines to `{LOG_PATH}`.
 - **`source_mode: paste` or `card_file`** — A1 becomes a **no-op** that
   returns the payload already staged by pre-flight step 7. Do NOT call
   `jira-fetch` (MCP is either down or intentionally bypassed). Emit
@@ -79,26 +82,22 @@ contract regardless of source.
 #### A2 — decision-logger (only if `--decisions` was passed)
 
 Run the **Decision Log subprocess** (`{PLUGIN_ROOT}/skills/decisions/SKILL.md`,
-Steps 1–4) in **pre-card mode** — A2 runs in
-parallel with A1 and therefore has no card payload yet. The decision log
-header is written with `Jira URL: [NEEDS CLARIFICATION] — pre-card mode`
-and rows are appended from the resolved `--decisions` content.
-
-After the Wave A join, if A1 succeeded, run a one-time **header sync**:
-re-open `{DECISION_PATH}`, replace the pre-card placeholders with the
-card title and Jira URL from A1, leave rows untouched.
+Steps 1–4) with the A1 card payload. The card folder exists by now, so
+rows are appended to the card-level `{DECISION_PATH}` directly.
 
 If `--decisions` was not passed, A2 is a no-op (the blank decision log
-scaffolded during pre-flight stays in place).
+scaffolded in pre-flight step 5 stays in place).
 
 #### A3 — settings.local.json
 
-Write `BASE_BRANCH={base-branch}` and `DIFF_BRANCH={diff-branch}` to
-`.claude/settings.local.json`. This is independent of git — a plain
-config write — and is safe to do before the feature branch is checked out.
-The write target is `.claude/settings.local.json` at the consuming repo's
-root — the standard Claude Code per-repo overrides file, which is
-gitignored by default and holds developer-machine-scoped values.
+Write `{CARD_ROOT}/settings.local.json` as valid JSON:
+```json
+{ "BASE_BRANCH": "{base-branch}", "DIFF_BRANCH": "{diff-branch}" }
+```
+A plain config write, independent of git, and safe to do before the feature
+branch is checked out. It lives in the card folder, so nothing under
+`.claude/` is touched and no gitignore entry is needed. In same-repo spec
+mode it is committed with the rest of the card folder.
 
 ### Wave A join
 
@@ -109,7 +108,7 @@ pipeline. Otherwise:
 Now that A1 has the card's parent and labels, look back at what earlier runs
 in this repo already learned:
 
-1. List sibling card folders by globbing `{SPEC_ROOT}/features/*/`, excluding this ticket's own `CARD_ROOT`.
+1. List sibling card folders by globbing `{SPEC_ROOT}/{features,bugfixes,hotfixes,default}/*/`, excluding this ticket's own `CARD_ROOT`.
 2. Score relevance: a folder whose ticket **is the parent** or **shares the
    parent** (sibling under the same epic — check each folder's
    `decision-log.md` header for the parent's key, or its ticket key prefix
@@ -118,7 +117,7 @@ in this repo already learned:
 3. Load **at most the two** most relevant folders' `decision-log.md` files
    (card-level, small by design) into working context, and note in
    `{LOG_PATH}`: `recall: loaded decision logs from {ticket-a}, {ticket-b}`.
-4. Nothing relevant, or `{SPEC_ROOT}/features/` is empty → skip silently and log
+4. Nothing relevant, or `{SPEC_ROOT}` has no card folders → skip silently and log
    `recall: no related prior work found`.
 
 Recall is **read-only and advisory**: prior decisions inform the spec and
@@ -184,8 +183,6 @@ If both succeeded:
    feature branch.
 2. If the spec's `--branch` placeholder needs reconciliation against
    B1's authoritative `branch_name`, patch it in the moved file.
-3. Run the **decision-log header sync** described in A2 (if `--decisions`
-   was passed and A1 succeeded).
 
 ---
 

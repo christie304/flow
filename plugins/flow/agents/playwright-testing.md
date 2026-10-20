@@ -144,7 +144,7 @@ In run mode `run` is populated:
 "run": {
   "command": "npx playwright test tests/PROJ-123/PROJ-123-profile-email-opt-in.spec.ts",
   "passed": 2, "failed": 1, "skipped": 1,
-  "results_path": "/home/jane/code/my-app/.spec/features/PROJ-123/p02/test-plan-results.md"
+  "results_path": "/home/jane/code/my-app/.flow/.spec/features/PROJ-123/p02/test-plan-results.md"
 }
 ```
 
@@ -342,9 +342,9 @@ not satisfy the need, and the alternative you rejected.
 # Wave H — author mode, unattended
 playwright-testing \
   --mode author \
-  --spec ~/code/my-app/.spec/features/PROJ-123/p02/spec.md \
-  --spec-testing ~/code/my-app/.spec/features/PROJ-123/p02/spec-testing.md \
-  --frontend-guide ~/code/my-app/.spec/features/PROJ-123/p02/front-end-testing.md \
+  --spec ~/code/my-app/.flow/.spec/features/PROJ-123/p02/spec.md \
+  --spec-testing ~/code/my-app/.flow/.spec/features/PROJ-123/p02/spec-testing.md \
+  --frontend-guide ~/code/my-app/.flow/.spec/features/PROJ-123/p02/front-end-testing.md \
   --diff-range origin/main...HEAD \
   --repo ~/code/my-app \
   --e2e-suite e2e \
@@ -357,5 +357,5 @@ playwright-testing \
   ... same inputs ... \
   --scenario TS-003 \
   --test-data '{"TS-003.userId": "123456"}' \
-  --results ~/code/my-app/.spec/features/PROJ-123/p02/test-plan-results.md
+  --results ~/code/my-app/.flow/.spec/features/PROJ-123/p02/test-plan-results.md
 ```

@@ -70,13 +70,14 @@ silently — memory is optional. Never create or modify
 `.flow/memory.md` from the pipeline; it changes only via PR.
 
 **4. Create the run log** (full pipeline only)
-Resolve `CARD_ROOT` and `PASS_DIR` first (see "Spec path resolution" and
-"Pass-index resolution"), then create the run log:
+Once `CARD_ROOT` and `PASS_DIR` are resolved (see "Spec path resolution"
+and "Pass-index resolution" — immediately for paste, after A1 for Jira),
+create the run log:
 ```
 {LOG_PATH}   (= {CARD_ROOT}/{PASS_DIR}/flow-log.md)
 ```
 
-**5. Scaffold the decision log** (full pipeline only)
+**5. Scaffold the decision log** (full pipeline only, same timing as step 4)
 If `{CARD_ROOT}/decision-log.md` does not yet exist, create it from
 `{SKILL_DIR}/references/decision-log-template.md` with an empty
 Decisions table. This file is **card-level** — it persists across passes
@@ -210,7 +211,7 @@ spec artifacts are written only under `{SPEC_ROOT}`.
    non-empty;
 2. `FLOW_SPEC_ROOT` in `.flow/config.md` at the consuming repo
    root;
-3. the default, `.spec`.
+3. the default, `.flow/.spec`.
 
 Expand `~` and environment variables. A relative value is joined with
 the consuming repo root (`git rev-parse --show-toplevel`; outside a repo,
@@ -218,8 +219,40 @@ the current directory). An absolute value is used as given. The folder
 need not exist yet — the first write creates it. The plugin's hooks and
 scripts resolve it the same way (`scripts/flow_paths.py`).
 
-**CARD_ROOT** = `{SPEC_ROOT}/features/{ticket}` — the full ticket key as
-normalized in step 7b (e.g. `{SPEC_ROOT}/features/PROJ-123`).
+**CARD_ROOT** = `{SPEC_ROOT}/{type}/{ticket}`, the full ticket key as
+normalized in step 7b (e.g. `{SPEC_ROOT}/features/PROJ-123`). `{type}` is
+one of four folders:
+
+| `{type}` | Holds |
+|----------|-------|
+| `features` | Stories, tasks and anything without a type below |
+| `bugfixes` | Bugs (`issue_type` `Bug`) |
+| `hotfixes` | Incidents, `Hotfix` issues, or cards labelled `hotfix` or `urgent` |
+| `default` | Cards whose type is not known yet: pasted cards, card files, and runs that never fetch the card |
+
+The type mapping matches branch-manager's `type` (`bugfix`, `hotfix`,
+`feature`), so a card's folder and its branch agree.
+
+Choosing `CARD_ROOT`:
+
+1. If a `{ticket}` folder already exists under any of the four types,
+   that is `CARD_ROOT`. Check the typed folders first, then `default`.
+2. Otherwise the folder is created where the card's type is first known:
+   - **Jira source:** the first dispatch that returns the card payload
+     from Jira creates it — Wave A · A1, or `/flow:fetch`, `/flow:brief`
+     or `/flow:spec`. Use the mapping above on that payload's
+     `issue_type` and labels.
+   - **Paste, or any run that never fetches the card** (`/flow:decisions`
+     without a fetch): create it under `default/`.
+3. Promote a folder out of `default/`: when a fetch later resolves the
+   card to a typed folder, move the whole `default/{ticket}` folder into
+   that type before anything else writes to it. If the typed folder
+   already exists too, stop and report both paths instead of merging.
+
+Until `CARD_ROOT` exists in the Jira case, pre-flight holds its log lines
+in memory and writes them to `{LOG_PATH}` the moment the folder is
+created. If the fetch fails before that, the lines are reported in chat
+instead.
 
 **Spec commit target.** Find the git repo that holds `SPEC_ROOT`: walk
 up from `SPEC_ROOT` (or its nearest existing ancestor) to the first

@@ -245,7 +245,7 @@ spec-author \
   --standards .flow/PROJ-standards.md \
   --author "Jane Doe <jane.doe@example.com>" \
   --branch feature/PROJ-123-profile-email-opt-in \
-  --write .spec/features/PROJ-123/p01/spec.md
+  --write .flow/.spec/features/PROJ-123/p01/spec.md
 ```
 
 ---

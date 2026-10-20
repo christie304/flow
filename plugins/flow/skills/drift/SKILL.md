@@ -79,7 +79,7 @@ Telemetry follows
 (agent `drift-checker`), around the agent dispatch with
 `{drift, high, medium, low, passes_compared_count}` in `outputs`, an
 `artifact` (kind: `drift_report`) for `{DRIFT_PATH}`, then `run.end` (`failed`
-if the agent returned `ok: false`), then the final `.spec` publish in
+if the agent returned `ok: false`), then the final spec publish in
 `${CLAUDE_PLUGIN_ROOT}/skills/run/references/telemetry-schema.md` →
 "Publish mechanics" (`--path {CARD_ROOT}`). Show the ⚠️ line if it comes
 back `pending: true`.

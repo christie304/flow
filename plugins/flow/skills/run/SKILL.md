@@ -41,8 +41,9 @@ description: >
   which holds `agents/`, `hooks/`, `scripts/` and the subcommand skills
   under `skills/`.
 - `{SPEC_ROOT}` — where spec artifacts live: `FLOW_SPEC_ROOT`
-  (env var or `.flow/config.md`), default `.spec` at the consuming
-  repo root. `{CARD_ROOT}` = `{SPEC_ROOT}/features/{ticket}`. Resolution
+  (env var or `.flow/config.md`), default `.flow/.spec` at the consuming
+  repo root. `{CARD_ROOT}` = `{SPEC_ROOT}/{type}/{ticket}`, where `{type}`
+  is `features`, `bugfixes`, `hotfixes` or `default`. Resolution
   rules: `{SKILL_DIR}/references/preflight.md` → "Spec path resolution".
 
 This file is the router and the map. The procedure lives in

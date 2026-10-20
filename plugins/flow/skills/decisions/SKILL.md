@@ -20,8 +20,9 @@ call `{SKILL_DIR}`. Honour
 `${CLAUDE_PLUGIN_ROOT}/skills/run/references/preflight.md` and run it in
 **subcommand mode** with `invocation: "decisions"`: config, standards,
 memory, `run.start`, source mode, then `SPEC_ROOT`, `CARD_ROOT` and
-`PASS_DIR` = the latest existing pass. No new pass folder. **Skip step 7 (source mode) entirely** — pre-card mode is legitimate
-here, so neither MCP availability nor ticket-key validation gates it.
+`PASS_DIR` = the latest existing pass. No new pass folder. **Skip step 7
+(source mode) entirely** — pre-card mode is legitimate here, so neither MCP
+availability nor ticket-key validation gates it.
 
 The full pipeline also runs Steps 1–4 below as Wave A · A2 when
 `/flow:run {ticket}` is given `--decisions`.
@@ -108,11 +109,15 @@ with clearer phrasing.
 When `/flow:decisions {ticket}` is run before the Jira card exists:
 
 1. Skip jira-fetch entirely.
-2. Decision-logger writes the log with `Jira URL: [NEEDS CLARIFICATION] —
+2. `CARD_ROOT` is `{SPEC_ROOT}/default/{ticket}` (see preflight.md,
+   "CARD_ROOT"). The decision log goes there, not under a typed folder,
+   because the card's type is not known yet.
+3. Decision-logger writes the log with `Jira URL: [NEEDS CLARIFICATION] —
    pre-card mode` in the header.
-3. Later, when `/flow:run {ticket}` is run for the first time, the existing
-   decision log is picked up; the header is updated with the now-known
-   card title and URL; rows are untouched.
+4. Later, when `/flow:run {ticket}` fetches the card for the first time, the
+   `default/{ticket}` folder moves into the typed folder for the card's type
+   (preflight.md, "CARD_ROOT" step 3). The header is updated with the
+   now-known card title and URL; rows are untouched.
 
 Telemetry follows
 `${CLAUDE_PLUGIN_ROOT}/skills/run/references/emission-map.md` →

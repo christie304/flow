@@ -101,7 +101,7 @@ Then run it for real:
 /flow:run PROJ-123
 ```
 
-Results land in `.spec/features/PROJ-123/p01/`: `spec.md`,
+Results land in `.flow/.spec/features/PROJ-123/p01/`: `spec.md`,
 `code-review.md`, `acceptance-criteria.md`, the three test documents and
 `flow-log.md`. The code sits committed on a local feature branch
 until you push it.
@@ -129,9 +129,10 @@ until you push it.
 Everything Flow writes is a file in your own repos. Nothing is sent
 anywhere else.
 
-- **Spec root** — `.spec/` at your repo root by default, or anywhere you
-  point `FLOW_SPEC_ROOT` (for example a separate specs repo). Each
-  ticket gets `features/{ticket}/` with a `decision-log.md` and one
+- **Spec root** — `.flow/.spec/` at your repo root by default, or anywhere
+  you point `FLOW_SPEC_ROOT` (for example a separate specs repo). Each
+  ticket gets a folder under `features/`, `bugfixes/`, `hotfixes/` or
+  `default/` with a `settings.local.json`, a `decision-log.md` and one
   folder per pass.
 - **Telemetry** — `{spec root}/telemetry/{YYYY-MM}/`, one JSONL file per
   run. It stays local: Flow drops a `.gitignore` there and never

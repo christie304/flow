@@ -7,7 +7,7 @@ skills/run/references/preflight.md -> "Spec path resolution"):
 
   1. the FLOW_SPEC_ROOT environment variable, when set and non-empty;
   2. FLOW_SPEC_ROOT in {repo}/.flow/config.md;
-  3. the default, `.spec` at the consuming repo root.
+  3. the default, `.flow/.spec` at the consuming repo root.
 
 `~` and environment variables are expanded. A relative value is joined
 with the consuming repo root: the nearest ancestor of the project
@@ -21,7 +21,7 @@ from pathlib import Path
 
 FLOW_HOME = Path.home() / ".claude" / "flow"
 BUFFER_DIR = FLOW_HOME / "telemetry-buffer"
-DEFAULT_SPEC_ROOT = ".spec"
+DEFAULT_SPEC_ROOT = ".flow/.spec"
 
 # Written into {SPEC_ROOT}/telemetry/ and {SPEC_ROOT}/reports/ when Flow
 # creates them, so local data stays out of git unless a team deletes it.

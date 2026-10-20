@@ -21,7 +21,7 @@ Both hooks resolve the spec root the way the skills do:
 
 1. the `FLOW_SPEC_ROOT` environment variable;
 2. `FLOW_SPEC_ROOT` in `{project}/.flow/config.md`;
-3. `{project}/.spec`.
+3. `{project}/.flow/.spec`.
 
 `{project}` is the git root of `CLAUDE_PROJECT_DIR`. Relative values are
 joined with it; `~` is expanded. The shared resolver is
@@ -40,7 +40,7 @@ package.
 
 | Var | Default | What it does |
 |---|---|---|
-| `FLOW_SPEC_ROOT` | unset (config, then `.spec`) | Overrides the spec root for the guard and for telemetry placement. |
+| `FLOW_SPEC_ROOT` | unset (config, then `.flow/.spec`) | Overrides the spec root for the guard and for telemetry placement. |
 | `FLOW_PATH_GUARD_ENABLED` | `true` | Set to `false` to switch the guard off. |
 | `FLOW_TELEMETRY_ENABLED` | `true` | Set to `false` to stop writing telemetry; leftover buffers are discarded. |
 | `FLOW_HOOK_LOG` | `~/.claude/flow/hooks.log` | Where hook decisions are logged. |

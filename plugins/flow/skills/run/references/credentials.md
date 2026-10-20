@@ -35,7 +35,7 @@ BASE_BRANCH=main
 BRANCH_FORMAT={type}/{ticket-key}-{slug}
 JIRA_DEFAULT_BOARD=
 DEFAULT_PASS_MODE=iterate
-FLOW_SPEC_ROOT=.spec
+FLOW_SPEC_ROOT=.flow/.spec
 FLOW_MEMORY_ENABLED=true
 FLOW_MEMORY_CHAR_BUDGET=4000
 AUTO_PUSH=false
@@ -66,11 +66,11 @@ the first-run prompt below and defined by the `branch-manager` agent.
 `FLOW_SPEC_ROOT` is where every spec artifact lives — the folder the
 docs call `{SPEC_ROOT}`. Set it in `.flow/config.md`, or as an
 environment variable of the same name; the environment variable wins.
-The shipped default is `.spec` at the consuming repo root.
+The shipped default is `.flow/.spec` at the consuming repo root.
 
 - **Relative** values are joined with the consuming repo root
   (`git rev-parse --show-toplevel`, or the current directory outside a
-  repo). `.spec` → `~/code/my-app/.spec`.
+  repo). `.flow/.spec` → `~/code/my-app/.flow/.spec`.
 - **Absolute** values (`/…`, `C:/…`) and `~/…` are used as given, after
   `~` expansion. Point it at a separate folder or repo to keep specs out
   of your application's history, e.g.
@@ -80,7 +80,8 @@ Layout under it:
 
 ```
 {SPEC_ROOT}/
-├── features/{ticket}/          ← {CARD_ROOT}
+├── features/{ticket}/          ← {CARD_ROOT} (also bugfixes/, hotfixes/, default/)
+│   ├── settings.local.json     (BASE_BRANCH, DIFF_BRANCH — written by A3)
 │   ├── decision-log.md         (card-level, persists across passes)
 │   ├── latest.txt
 │   └── p01/, p02/, …           (one folder per pass)
@@ -106,7 +107,7 @@ they write stays uncommitted under `{CARD_ROOT}`.
 The plugin's path-guard hook enforces the root: a write into any `.spec/`
 folder that is not under the resolved `FLOW_SPEC_ROOT` is blocked.
 The hook resolves it the same way (environment variable, then
-`.flow/config.md` in the project, then `.spec`).
+`.flow/config.md` in the project, then `.flow/.spec`).
 
 ### Push and PR — `AUTO_PUSH`, `PR_MODE`
 
@@ -297,7 +298,7 @@ Leave blank for default: {type}/{ticket-key}-{slug}
 Where should spec artifacts live? A path relative to this repo, or an
 absolute path such as ~/code/my-specs/.spec to keep specs in their own
 folder or repo. Flow commits them locally and never pushes them.
-Leave blank for default: .spec (inside this repo, committed with the code)
+Leave blank for default: .flow/.spec (inside this repo, committed with the code)
 
   Spec root:
 
@@ -364,8 +365,10 @@ interactive `source_mode: paste` routes:
 To configure Atlassian MCP, make sure these are allowed in
 .claude/settings.local.json:
 
-  "mcp__atlassian__getJiraIssue"
-  "mcp__atlassian__searchJiraIssuesUsingJql"
+  { "permissions": { "allow": [
+      "mcp__atlassian__getJiraIssue",
+      "mcp__atlassian__searchJiraIssuesUsingJql"
+  ] } }
 
 Or run /mcp in an interactive Claude Code session to re-auth. To
 continue this run without Jira, paste the card content below (title,
@@ -399,23 +402,6 @@ extension picks the parser:
 With `--card-file`, MCP is not probed and the interactive prompt is not
 shown. Ticket key detection: CLI argument first, then the file's own
 `ticket` (JSON) or `# PROJ-123 …` header (freeform).
-
----
-
-## Gitignore check
-
-On first run, verify `.claude/settings.local.json` is excluded from git:
-
-```bash
-git check-ignore -v .claude/settings.local.json
-```
-
-If not ignored, add it:
-
-```bash
-echo ".claude/settings.local.json" >> .gitignore
-git add .gitignore
-```
 
 ---
 

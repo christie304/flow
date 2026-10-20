@@ -44,7 +44,7 @@ setup once in Wave B, then publish operations in later phases.
 ### Storage rule — spec artifacts and telemetry are never pushed
 
 Spec artifacts live under the resolved spec root (`{SPEC_ROOT}`, default
-`.spec` at the consuming repo root). This agent commits them **locally**
+`.flow/.spec` at the consuming repo root). This agent commits them **locally**
 and never pushes them on their own:
 
 - **`{SPEC_ROOT}` inside the consuming repo** — spec artifacts are ordinary

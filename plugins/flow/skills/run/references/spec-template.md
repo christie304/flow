@@ -4,8 +4,8 @@ This is the single source of truth for the spec file Flow writes in Phase 2.
 Any phase that references the spec template loads it from this file.
 Do not duplicate this template in SKILL.md or anywhere else.
 
-Write the populated spec to `{SPEC_ROOT}/features/{full-ticket}/{PASS_DIR}/spec.md`
-(for a first pass, `{SPEC_ROOT}/features/{full-ticket}/p01/spec.md`).
+Write the populated spec to `{CARD_ROOT}/{PASS_DIR}/spec.md`
+(for a first pass, `{CARD_ROOT}/p01/spec.md`).
 
 ---
 

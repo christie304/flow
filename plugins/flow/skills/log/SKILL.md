@@ -28,7 +28,7 @@ command writes.
 
 1. Resolve the log path: `{LOG_PATH}` for the **latest** pass
    (`p{HIGHEST}` per "Pass-index resolution" in `preflight.md`) — that
-   is, `{SPEC_ROOT}/features/{ticket}/p{NN}/flow-log.md`. To read an
+   is, `{CARD_ROOT}/p{NN}/flow-log.md`. To read an
    earlier pass, name it: `/flow:log {ticket} p02`.
 2. If the file exists → read it and display the full contents in the
    conversation.
@@ -41,7 +41,7 @@ command writes.
 
 ## Without a ticket — `/flow:log`
 
-1. Glob `{SPEC_ROOT}/features/*/p*/flow-log.md`. When a ticket has
+1. Glob `{SPEC_ROOT}/{features,bugfixes,hotfixes,default}/*/p*/flow-log.md`. When a ticket has
    several passes, key on the **latest** pass (highest `p{NN}`) for its
    summary row.
 2. For each match, extract the ticket key and the `**Overall status**`
@@ -63,6 +63,6 @@ command writes.
 
 4. If no logs are found:
    ```
-   ⚠️  No flow logs found under {SPEC_ROOT}/features/.
+   ⚠️  No flow logs found under {SPEC_ROOT}.
    Run /flow:run {ticket} to generate one.
    ```
