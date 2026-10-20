@@ -3,6 +3,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Local Specflow output if you dogfood the plugin inside this repo
+# Local Flow output if you dogfood the plugin inside this repo
 .spec/
 .claude/settings.local.json
